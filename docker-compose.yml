@@ -38,6 +38,28 @@ services:
     networks:
       - adserver_network
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: adserver_app
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8000}:8000"
+    environment:
+      SERVER_PORT: "8000"
+      DATABASE_URL: "postgres://${POSTGRES_USER:-adserver}:${POSTGRES_PASSWORD:-adserver_secret}@postgres:5432/${POSTGRES_DB:-adserver_db}?sslmode=disable"
+      REDIS_URL: "redis://redis:6379/0"
+      FREQUENCY_CAP_MAX: "${FREQUENCY_CAP_MAX:-3}"
+      LOG_LEVEL: "info"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - adserver_network
+
 volumes:
   postgres_data:
     name: adserver_postgres_data
@@ -48,4 +70,3 @@ networks:
   adserver_network:
     name: adserver_network
     driver: bridge
-

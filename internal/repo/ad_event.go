@@ -153,4 +153,3 @@ func (r *AdEventRepo) GetDayReport(ctx context.Context, fromTime, toTime time.Ti
 	}
 	return report, rows.Err()
 }
-

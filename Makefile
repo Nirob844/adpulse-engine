@@ -1,4 +1,4 @@
-.PHONY: help up down restart logs status db-shell db-seed db-reset redis-cli redis-flush
+.PHONY: help up up-deps down restart logs status db-shell db-seed db-reset redis-cli redis-flush test build run
 
 # Load environment variables if .env exists
 ifneq (,$(wildcard ./.env))
@@ -7,10 +7,13 @@ ifneq (,$(wildcard ./.env))
 endif
 
 help: ## Show this help message
-	@echo "Available commands:"
+	@echo "Mini Ad Server - Available commands:"
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-up: ## Start PostgreSQL and Redis containers in background
+up-deps: ## Start PostgreSQL and Redis containers in background
+	docker compose up -d postgres redis
+
+up: ## Start all containers (Postgres, Redis, and Go App) in background
 	docker compose up -d
 
 down: ## Stop all Docker containers
@@ -25,6 +28,15 @@ logs: ## Stream logs from all containers
 status: ## Show status of Docker containers
 	docker compose ps
 
+build: ## Build Go server binary locally
+	go build -o bin/server ./cmd/server
+
+run: ## Run Go server locally
+	go run ./cmd/server
+
+test: ## Run all unit and integration tests
+	go test -v -count=1 ./...
+
 db-shell: ## Open interactive PostgreSQL psql shell
 	docker compose exec -it postgres psql -U $${POSTGRES_USER:-adserver} -d $${POSTGRES_DB:-adserver_db}
 
@@ -33,7 +45,7 @@ db-seed: ## Re-apply initial seed data to PostgreSQL
 
 db-reset: ## Reset database volume and re-initialize schema & seed
 	docker compose down -v
-	docker compose up -d
+	docker compose up -d postgres redis
 
 redis-cli: ## Open interactive Redis CLI
 	docker compose exec -it redis redis-cli

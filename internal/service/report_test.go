@@ -26,11 +26,11 @@ func TestReportService_Validations(t *testing.T) {
 	svc := NewReportService(repo)
 
 	testCases := []struct {
-		name      string
-		from      string
-		to        string
-		groupBy   string
-		wantErr   error
+		name    string
+		from    string
+		to      string
+		groupBy string
+		wantErr error
 	}{
 		{
 			name:    "missing from",
