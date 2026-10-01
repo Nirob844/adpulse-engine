@@ -36,7 +36,7 @@ type updateCampaignPayload struct {
 // Create handles POST /campaigns
 func (h *CampaignHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if r.Body == nil {
-		writeJSONError(w, http.StatusBadRequest, "request body is required")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "request body is required")
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
@@ -46,40 +46,40 @@ func (h *CampaignHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var payload createCampaignPayload
 	if err := decoder.Decode(&payload); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request payload: "+err.Error())
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid request payload: "+err.Error())
 		return
 	}
 
 	// 1. Validate name (required, non-empty string)
 	if payload.Name == nil {
-		writeJSONError(w, http.StatusBadRequest, "name is required")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "name is required")
 		return
 	}
 	nameStr, ok := payload.Name.(string)
 	if !ok || strings.TrimSpace(nameStr) == "" {
-		writeJSONError(w, http.StatusBadRequest, "name must be a non-empty string")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "name must be a non-empty string")
 		return
 	}
 	name := strings.TrimSpace(nameStr)
 
 	// 2. Validate daily_impression_limit (required positive integer; reject "5", 1.5, <= 0)
 	if payload.DailyImpressionLimit == nil {
-		writeJSONError(w, http.StatusBadRequest, "daily_impression_limit is required")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "daily_impression_limit is required")
 		return
 	}
 	num, ok := payload.DailyImpressionLimit.(json.Number)
 	if !ok {
-		writeJSONError(w, http.StatusBadRequest, "daily_impression_limit must be a number, string values are not allowed")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "daily_impression_limit must be a number, string values are not allowed")
 		return
 	}
 	rawLimit := num.String()
 	if strings.Contains(rawLimit, ".") || strings.ContainsAny(rawLimit, "eE") {
-		writeJSONError(w, http.StatusBadRequest, "daily_impression_limit must be an integer, floats are not allowed")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "daily_impression_limit must be an integer, floats are not allowed")
 		return
 	}
 	limitVal, err := num.Int64()
 	if err != nil || limitVal <= 0 || limitVal > math.MaxInt32 {
-		writeJSONError(w, http.StatusBadRequest, "daily_impression_limit must be a positive integer")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "daily_impression_limit must be a positive integer")
 		return
 	}
 
@@ -88,12 +88,12 @@ func (h *CampaignHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if payload.Status != nil {
 		statusStr, ok := payload.Status.(string)
 		if !ok {
-			writeJSONError(w, http.StatusBadRequest, "status must be a string")
+			WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "status must be a string")
 			return
 		}
 		trimmedStatus := strings.TrimSpace(statusStr)
 		if trimmedStatus != model.CampaignStatusActive && trimmedStatus != model.CampaignStatusPaused {
-			writeJSONError(w, http.StatusBadRequest, "status must be either 'active' or 'paused'")
+			WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "status must be either 'active' or 'paused'")
 			return
 		}
 		status = trimmedStatus
@@ -103,16 +103,14 @@ func (h *CampaignHandler) Create(w http.ResponseWriter, r *http.Request) {
 	camp, err := h.service.CreateCampaign(r.Context(), name, int(limitVal), status)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidName) || errors.Is(err, service.ErrInvalidLimit) || errors.Is(err, service.ErrInvalidStatus) {
-			writeJSONError(w, http.StatusBadRequest, err.Error())
+			WriteError(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
 			return
 		}
-		writeJSONError(w, http.StatusInternalServerError, "failed to create campaign: "+err.Error())
+		WriteError(w, http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "failed to create campaign: "+err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(camp)
+	WriteJSON(w, http.StatusCreated, camp)
 }
 
 // UpdateStatus handles PATCH /campaigns/:id
@@ -120,12 +118,12 @@ func (h *CampaignHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil || id <= 0 {
-		writeJSONError(w, http.StatusBadRequest, "invalid campaign id, must be a positive integer")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid campaign id, must be a positive integer")
 		return
 	}
 
 	if r.Body == nil {
-		writeJSONError(w, http.StatusBadRequest, "request body is required")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "request body is required")
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
@@ -134,23 +132,23 @@ func (h *CampaignHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 	var payload updateCampaignPayload
 	if err := decoder.Decode(&payload); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request payload: "+err.Error())
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid request payload: "+err.Error())
 		return
 	}
 
 	// Validate status strictly
 	if payload.Status == nil {
-		writeJSONError(w, http.StatusBadRequest, "status is required")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "status is required")
 		return
 	}
 	statusStr, ok := payload.Status.(string)
 	if !ok {
-		writeJSONError(w, http.StatusBadRequest, "status must be a string")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "status must be a string")
 		return
 	}
 	trimmedStatus := strings.TrimSpace(statusStr)
 	if trimmedStatus != model.CampaignStatusActive && trimmedStatus != model.CampaignStatusPaused {
-		writeJSONError(w, http.StatusBadRequest, "status must be either 'active' or 'paused'")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "status must be either 'active' or 'paused'")
 		return
 	}
 
@@ -158,20 +156,18 @@ func (h *CampaignHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	camp, err := h.service.UpdateStatus(r.Context(), id, trimmedStatus)
 	if err != nil {
 		if errors.Is(err, service.ErrCampaignNotFound) {
-			writeJSONError(w, http.StatusNotFound, "campaign not found")
+			WriteError(w, http.StatusNotFound, "NOT_FOUND", "campaign not found")
 			return
 		}
 		if errors.Is(err, service.ErrInvalidStatus) {
-			writeJSONError(w, http.StatusBadRequest, err.Error())
+			WriteError(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
 			return
 		}
-		writeJSONError(w, http.StatusInternalServerError, "failed to update campaign: "+err.Error())
+		WriteError(w, http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "failed to update campaign: "+err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(camp)
+	WriteJSON(w, http.StatusOK, camp)
 }
 
 // GetByID handles GET /campaigns/:id
@@ -179,42 +175,33 @@ func (h *CampaignHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil || id <= 0 {
-		writeJSONError(w, http.StatusBadRequest, "invalid campaign id, must be a positive integer")
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid campaign id, must be a positive integer")
 		return
 	}
 
 	camp, err := h.service.GetCampaign(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, service.ErrCampaignNotFound) {
-			writeJSONError(w, http.StatusNotFound, "campaign not found")
+			WriteError(w, http.StatusNotFound, "NOT_FOUND", "campaign not found")
 			return
 		}
-		writeJSONError(w, http.StatusInternalServerError, "failed to get campaign: "+err.Error())
+		WriteError(w, http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "failed to get campaign: "+err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(camp)
+	WriteJSON(w, http.StatusOK, camp)
 }
 
 // List handles GET /campaigns
 func (h *CampaignHandler) List(w http.ResponseWriter, r *http.Request) {
 	campaigns, err := h.service.ListCampaigns(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to list campaigns: "+err.Error())
+		WriteError(w, http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "failed to list campaigns: "+err.Error())
 		return
 	}
 	if campaigns == nil {
 		campaigns = []*model.Campaign{}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(campaigns)
-}
-
-// writeJSONError writes an HTTP error status code and JSON error object.
-func writeJSONError(w http.ResponseWriter, status int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
+	WriteJSON(w, http.StatusOK, campaigns)
 }

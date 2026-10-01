@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -71,14 +70,13 @@ func main() {
 		pingCtx, pingCancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer pingCancel()
 
-		w.Header().Set("Content-Type", "application/json")
+		statusCode := http.StatusOK
 		if err := pool.Ping(pingCtx); err != nil {
 			dbStatus = "disconnected: " + err.Error()
-			w.WriteHeader(http.StatusServiceUnavailable)
-		} else {
-			w.WriteHeader(http.StatusOK)
+			statusCode = http.StatusServiceUnavailable
 		}
-		_ = json.NewEncoder(w).Encode(map[string]any{
+
+		handler.WriteJSON(w, statusCode, map[string]any{
 			"status":   "ok",
 			"database": dbStatus,
 			"time":     time.Now().UTC().Format(time.RFC3339),

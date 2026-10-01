@@ -419,6 +419,12 @@ components:
     ErrorResponse:
       type: object
       properties:
+        status:
+          type: integer
+          example: 400
+        code:
+          type: string
+          example: "BAD_REQUEST"
         error:
           type: string
           example: "daily_impression_limit must be a positive integer"

@@ -233,3 +233,27 @@ func TestPatchCampaignStatus(t *testing.T) {
 		t.Errorf("expected 404 for unknown campaign, got %d", w.Code)
 	}
 }
+
+func TestStructuredErrorFormat(t *testing.T) {
+	r, _ := setupTestRouter(t)
+	if r == nil {
+		return
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/campaigns", bytes.NewBufferString(`{"name":""}`))
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+
+	var errResp ErrorResponse
+	if err := json.NewDecoder(w.Body).Decode(&errResp); err != nil {
+		t.Fatalf("failed to decode structured error: %v", err)
+	}
+
+	if errResp.Status != 400 || errResp.Code == "" || errResp.Error == "" {
+		t.Errorf("expected populated ErrorResponse, got %+v", errResp)
+	}
+}
