@@ -92,8 +92,13 @@ func NewRouter(cfg RouterConfig) chi.Router {
 	adService := service.NewAdService(creativeRepo, eventRepo, cfg.Redis, freqCapMax)
 	adHandler := handler.NewAdHandler(adService)
 
+	trackingService := service.NewTrackingService(creativeRepo, eventRepo, cfg.Redis)
+	trackingHandler := handler.NewTrackingHandler(trackingService)
+
 	// 4. API Endpoints
 	r.Get("/ad", adHandler.ServeAd)
+	r.Get("/track/impression", trackingHandler.TrackImpression)
+	r.Get("/track/click", trackingHandler.TrackClick)
 
 	r.Route("/campaigns", func(r chi.Router) {
 		r.Post("/", campaignHandler.Create)

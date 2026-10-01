@@ -11,8 +11,8 @@ import (
 )
 
 type mockAdCache struct {
-	candidates map[string][]*model.CreativeCandidate
-	freqCounts map[string]int64
+	candidates  map[string][]*model.CreativeCandidate
+	freqCounts  map[string]int64
 	dailyCounts map[string]int64
 }
 
