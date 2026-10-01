@@ -2,11 +2,688 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Demo Publisher Page - TechNews Daily</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Daily Tech Chronicle - Demo Publisher</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --bg-page: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-card: #f1f5f9;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-purple: #8b5cf6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Top Announcement Bar */
+        .top-bar {
+            background-color: #0f172a;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            padding: 6px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .top-bar a {
+            color: #38bdf8;
+            text-decoration: none;
+            margin-left: 12px;
+        }
+        .top-bar a:hover {
+            text-decoration: underline;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 0 16px;
+        }
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .logo-area h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #0f172a;
+            line-height: 1.1;
+        }
+        .logo-area .tagline {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+        .header-meta {
+            text-align: right;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+        }
+        .nav-inner a {
+            display: inline-block;
+            padding: 12px 0;
+            color: var(--text-dark);
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+        .nav-inner a.active, .nav-inner a:hover {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 24px auto;
+            padding: 0 20px;
+        }
+
+        /* Leaderboard Banner Area */
+        .leaderboard-wrapper {
+            margin: 0 auto 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .ad-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 36px;
+        }
+
+        /* Main Article */
+        article {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 36px;
+        }
+        .article-category {
+            display: inline-block;
+            background: #eff6ff;
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        article h2 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 16px;
+            color: #0f172a;
+        }
+        .article-byline {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .article-byline .author-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        article p {
+            margin-bottom: 18px;
+            font-size: 1.05rem;
+            color: #334155;
+            line-height: 1.75;
+        }
+        article h3 {
+            font-size: 1.3rem;
+            margin: 28px 0 12px;
+            color: #0f172a;
+        }
+        article blockquote {
+            border-left: 4px solid var(--primary);
+            padding: 12px 20px;
+            margin: 20px 0;
+            background-color: #f8fafc;
+            color: #475569;
+            font-style: italic;
+        }
+
+        /* Sidebar */
+        aside {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+        .sidebar-widget {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .widget-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #0f172a;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        .sidebar-ad-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Generic Ad Slot Styles */
+        .ad-slot {
+            background-color: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+        }
+        .ad-slot:hover {
+            border-color: #94a3b8;
+        }
+        .ad-slot a.ad-link {
+            display: inline-block;
+            line-height: 0;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .ad-slot img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            border: none;
+        }
+
+        /* Ad Slot Loading & Empty States */
+        .ad-slot-spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .ad-empty-notice {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 16px;
+            text-align: center;
+        }
+        .ad-empty-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: #e2e8f0;
+            color: #475569;
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+        .ad-empty-notice.error .ad-empty-badge {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .ad-empty-text {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        /* Diagnostics & Inspector Drawer */
+        .inspector-panel {
+            margin-top: 48px;
+            background-color: #0f172a;
+            color: #f8fafc;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+        .inspector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 14px;
+            margin-bottom: 16px;
+        }
+        .inspector-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .inspector-badge {
+            background: #2563eb;
+            color: #ffffff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+        }
+        .inspector-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover {
+            background: #334155;
+            color: #38bdf8;
+            border-color: #64748b;
+        }
+        .btn-primary {
+            background: #2563eb;
+            border-color: #3b82f6;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+            color: #ffffff;
+        }
+        .inspector-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .stat-card {
+            background: #1e293b;
+            padding: 12px 16px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+        }
+        .stat-label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-top: 4px;
+        }
+        .event-log {
+            background: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 12px;
+            height: 160px;
+            overflow-y: auto;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.78rem;
+            color: #cbd5e1;
+        }
+        .log-entry {
+            margin-bottom: 4px;
+            line-height: 1.4;
+            display: flex;
+            gap: 8px;
+        }
+        .log-time {
+            color: #64748b;
+        }
+        .log-tag {
+            font-weight: 700;
+            padding: 0 4px;
+            border-radius: 3px;
+        }
+        .log-tag.load { background: #1e3a8a; color: #93c5fd; }
+        .log-tag.impression { background: #064e3b; color: #6ee7b7; }
+        .log-tag.click { background: #701a75; color: #f472b6; }
+        .log-tag.empty { background: #78350f; color: #fcd34d; }
+        .log-tag.error { background: #7f1d1d; color: #fca5a5; }
+
+        /* Footer */
+        footer {
+            margin-top: 48px;
+            padding: 32px 0;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-surface);
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            .inspector-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Demo Publisher Page</h1>
-    <p>Ad slots will be loaded here.</p>
+
+    <!-- Top Announcement Bar -->
+    <div class="top-bar">
+        <span>Mini Ad Server Demo Publisher Environment</span>
+        <div>
+            <a href="/" target="_blank">Server Dashboard</a>
+            <a href="/docs" target="_blank">Interactive API Docs</a>
+            <a href="/report?from=2026-09-25&to=2026-10-02" target="_blank">Reporting API</a>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-inner">
+            <div class="logo-area">
+                <h1>The Daily Tech Chronicle</h1>
+                <div class="tagline">Independent Systems, Cloud Architecture & Advertising Technology</div>
+            </div>
+            <div class="header-meta">
+                <div>Edition: Global Developer Preview</div>
+                <div id="current-date">October 1, 2026</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-inner">
+            <a href="#" class="active">Engineering</a>
+            <a href="#">Distributed Systems</a>
+            <a href="#">Database Internals</a>
+            <a href="#">AdTech & RTB</a>
+            <a href="#">Performance</a>
+            <a href="#">Architecture</a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+
+        <!-- Top Leaderboard Ad Slot (728x90) -->
+        <div class="leaderboard-wrapper">
+            <span class="ad-label">Advertisement (728x90 Leaderboard)</span>
+            <div class="ad-slot" data-ad-size="728x90" id="slot-leaderboard"></div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
+
+            <!-- Main Article -->
+            <article>
+                <span class="article-category">AdTech Architecture</span>
+                <h2>High-Throughput Ad Serving with Go, PostgreSQL and Redis Caching</h2>
+                <div class="article-byline">
+                    <div class="author-avatar">MS</div>
+                    <div>
+                        <strong>Marcus Sterling</strong> &bull; Lead Systems Architect<br>
+                        <span>Published 8 mins ago &bull; 6 min read</span>
+                    </div>
+                </div>
+
+                <p>
+                    Modern digital advertising systems operate under rigorous performance constraints. When a user navigates to a publisher's web property, the ad tag must query candidate campaigns, filter inventory according to slot geometry, enforce frequency capping, and return creative markup within single-digit milliseconds.
+                </p>
+
+                <blockquote>
+                    "In real-time advertising, latency is currency. A lightweight Go server backed by compound B-tree indexes and Redis candidate sets allows sub-2ms ad decisioning at scale."
+                </blockquote>
+
+                <h3>Decoupled Impression & Click Tracking</h3>
+                <p>
+                    A critical architectural pattern in ad serving is separating ad delivery from event tracking. When <code>GET /ad?size=WxH</code> returns a creative, the creative is encapsulated in an anchor pointing to the tracking URL (<code>/track/click?c=&lt;id&gt;</code>). The browser renders the <code>&lt;img&gt;</code> element, and only once the media asset has successfully loaded in the client does the ad tag dispatch the impression beacon to <code>/track/impression?c=&lt;id&gt;</code>.
+                </p>
+
+                <p>
+                    This guarantees that impressions are never prematurely tallied if a user bounces before creative assets materialize or if network packet loss disrupts the payload delivery. Furthermore, strict client-side once-per-load guards prevent duplicate impression recording.
+                </p>
+
+                <h3>Campaign Quotas and IP Frequency Capping</h3>
+                <p>
+                    To ensure high advertiser return-on-ad-spend (ROAS), the serving engine enforces daily impression quotas per campaign and an IP-based frequency cap (at most 3 impressions per creative per client IP per 24 hours). This mitigates impression burnout and balances brand visibility across unique audiences.
+                </p>
+            </article>
+
+            <!-- Sidebar -->
+            <aside>
+                <!-- Medium Rectangle Ad Slot (300x250) -->
+                <div class="sidebar-widget sidebar-ad-wrapper">
+                    <span class="ad-label">Advertisement (300x250 Rectangle)</span>
+                    <div class="ad-slot" data-ad-size="300x250" id="slot-rectangle"></div>
+                </div>
+
+                <!-- Trending Topics Widget -->
+                <div class="sidebar-widget">
+                    <div class="widget-title">Trending in Tech</div>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem;">
+                        <li><a href="#" style="color: #0f172a; text-decoration: none; font-weight: 500;">&bull; Sub-millisecond B-tree indexing in PostgreSQL 16</a></li>
+                        <li><a href="#" style="color: #0f172a; text-decoration: none; font-weight: 500;">&bull; Designing zero-allocation HTTP routers in Go</a></li>
+                        <li><a href="#" style="color: #0f172a; text-decoration: none; font-weight: 500;">&bull; Why 1x1 transparent GIFs remain the gold standard for tracking</a></li>
+                    </ul>
+                </div>
+            </aside>
+
+        </div>
+
+        <!-- Inspector & Diagnostics Panel -->
+        <div class="inspector-panel">
+            <div class="inspector-header">
+                <div class="inspector-title">
+                    <span>Ad Server Live Inspector</span>
+                    <span class="inspector-badge">Active</span>
+                </div>
+                <div class="inspector-actions">
+                    <button class="btn btn-primary" id="btn-refresh" onclick="refreshAds()">Refresh Ad Slots</button>
+                    <button class="btn" id="btn-clear-log" onclick="clearEventLog()">Clear Log</button>
+                    <a href="/docs" target="_blank" class="btn">API Docs</a>
+                    <a href="/report?from=2026-09-25&to=2026-10-02" target="_blank" class="btn">View Live Report</a>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="inspector-stats">
+                <div class="stat-card">
+                    <div class="stat-label">Ads Requested</div>
+                    <div class="stat-value" id="stat-requested">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Creatives Loaded</div>
+                    <div class="stat-value" id="stat-loaded" style="color: #60a5fa;">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Impressions Fired</div>
+                    <div class="stat-value" id="stat-impressions" style="color: #34d399;">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Ad Clicks</div>
+                    <div class="stat-value" id="stat-clicks" style="color: #f472b6;">0</div>
+                </div>
+            </div>
+
+            <!-- Real-time Event Stream -->
+            <div class="event-log" id="event-log">
+                <div class="log-entry">
+                    <span class="log-time">[System]</span>
+                    <span class="log-text">Publisher client initialized. Listening for MiniAdTag events...</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Mini Ad Server Demo Publisher. All rights reserved.</p>
+            <p style="margin-top: 6px; font-size: 0.75rem;">Engineered for high-throughput ad serving, real-time impression pixels, and click attribution.</p>
+        </div>
+    </footer>
+
+    <!-- Load Mini Ad Server Ad Tag Client -->
+    <script src="/adtag.js"></script>
+
+    <!-- Publisher Page Instrumentation Script -->
+    <script>
+        (function () {
+            var stats = {
+                requested: 0,
+                loaded: 0,
+                impressions: 0,
+                clicks: 0
+            };
+
+            var statReq = document.getElementById('stat-requested');
+            var statLoad = document.getElementById('stat-loaded');
+            var statImp = document.getElementById('stat-impressions');
+            var statClk = document.getElementById('stat-clicks');
+            var logContainer = document.getElementById('event-log');
+
+            function addLog(tagClass, tagText, message) {
+                var now = new Date();
+                var timeStr = now.toTimeString().split(' ')[0] + '.' + ('00' + now.getMilliseconds()).slice(-3);
+                var entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerHTML = '<span class="log-time">[' + timeStr + ']</span> ' +
+                    '<span class="log-tag ' + tagClass + '">' + tagText + '</span> ' +
+                    '<span class="log-text">' + message + '</span>';
+                logContainer.appendChild(entry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            // Window Event Listeners for MiniAdTag
+            window.addEventListener('miniad:loaded', function (e) {
+                stats.loaded++;
+                statLoad.textContent = stats.loaded;
+                addLog('load', 'LOAD', 'Creative #' + e.detail.creativeId + ' rendered for slot ' + e.detail.size + ' (Click target: ' + e.detail.clickUrl + ')');
+            });
+
+            window.addEventListener('miniad:impression', function (e) {
+                stats.impressions++;
+                statImp.textContent = stats.impressions;
+                addLog('impression', 'IMPRESSION', 'Pixel beacon fired for creative #' + e.detail.creativeId + ' (' + e.detail.impressionUrl + ')');
+            });
+
+            window.addEventListener('miniad:click', function (e) {
+                stats.clicks++;
+                statClk.textContent = stats.clicks;
+                addLog('click', 'CLICK', 'User clicked ad creative #' + e.detail.creativeId + ' &rarr; redirecting via ' + e.detail.clickUrl);
+            });
+
+            window.addEventListener('miniad:empty', function (e) {
+                addLog('empty', '204 EMPTY', 'No candidate ad available for slot ' + e.detail.size + ' (frequency cap reached or campaign limit exhausted)');
+            });
+
+            window.addEventListener('miniad:error', function (e) {
+                addLog('error', 'ERROR', 'Error on slot ' + e.detail.size + ': ' + e.detail.error);
+            });
+
+            // Global functions for toolbar buttons
+            window.refreshAds = function () {
+                stats.requested += 2;
+                statReq.textContent = stats.requested;
+                addLog('load', 'REFRESH', 'Requesting ads for 728x90 and 300x250 slots...');
+                if (window.MiniAdTag) {
+                    window.MiniAdTag.refreshAll();
+                }
+            };
+
+            window.clearEventLog = function () {
+                logContainer.innerHTML = '';
+            };
+
+            // Initial counter sync
+            stats.requested = document.querySelectorAll('.ad-slot').length;
+            statReq.textContent = stats.requested;
+        })();
+    </script>
 </body>
 </html>
-
