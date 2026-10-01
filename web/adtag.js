@@ -109,6 +109,16 @@
             var clickUrl = adData.click_url;
             var impressionUrl = adData.impression_url;
 
+            // Ensure absolute tracking URLs when loaded across ports
+            if (this.apiBase) {
+                if (clickUrl && clickUrl.indexOf('http') !== 0) {
+                    clickUrl = this.apiBase + clickUrl;
+                }
+                if (impressionUrl && impressionUrl.indexOf('http') !== 0) {
+                    impressionUrl = this.apiBase + impressionUrl;
+                }
+            }
+
             // 1. Create tracking click anchor
             var anchor = document.createElement('a');
             anchor.href = clickUrl;
@@ -122,9 +132,13 @@
             if (adData.html) {
                 anchor.innerHTML = adData.html;
             } else if (adData.image_url) {
+                var imgUrl = adData.image_url;
+                if (this.apiBase && imgUrl.indexOf('http') !== 0) {
+                    imgUrl = this.apiBase + imgUrl;
+                }
                 var parts = size.toLowerCase().split('x');
                 var img = document.createElement('img');
-                img.src = adData.image_url;
+                img.src = imgUrl;
                 img.width = parseInt(parts[0], 10) || 300;
                 img.height = parseInt(parts[1], 10) || 250;
                 img.alt = 'Advertisement';
@@ -136,6 +150,7 @@
             // 3. Impression Tracking - Fire ONLY when creative image loads in browser, and at most once
             var imgElem = anchor.querySelector('img');
             var impressionFired = false;
+            var self = this;
 
             function triggerImpression() {
                 if (impressionFired) return;
@@ -161,14 +176,25 @@
             }
 
             if (imgElem) {
+                // If relative src and apiBase is set, fix src
+                if (self.apiBase && imgElem.getAttribute('src') && imgElem.getAttribute('src').indexOf('http') !== 0) {
+                    imgElem.src = self.apiBase + imgElem.getAttribute('src');
+                }
+
+                // Error fallback: If external image fails (e.g. placehold.co blocked by ISP or ad blocker), fallback to reliable local SVG banner
+                imgElem.addEventListener('error', function () {
+                    var fallbackSvg = (self.apiBase || '') + '/assets/banner_' + size + '.svg';
+                    if (imgElem.src !== fallbackSvg) {
+                        console.warn('[MiniAdTag] Creative image #' + creativeId + ' failed to load. Switching to local SVG banner:', fallbackSvg);
+                        imgElem.src = fallbackSvg;
+                    }
+                }, { once: true });
+
                 if (imgElem.complete && imgElem.naturalWidth > 0) {
                     // Image was already cached and loaded immediately
                     triggerImpression();
                 } else {
                     imgElem.addEventListener('load', triggerImpression, { once: true });
-                    imgElem.addEventListener('error', function () {
-                        console.warn('[MiniAdTag] Creative image failed to load for creative #' + creativeId);
-                    }, { once: true });
                 }
             } else {
                 // If creative has no image tag, trigger immediately

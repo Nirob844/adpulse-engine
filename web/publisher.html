@@ -489,6 +489,11 @@
     <!-- Main Container -->
     <div class="container">
 
+        <!-- AdBlock Notice if detected -->
+        <div id="adblock-notice" style="display:none; max-width: 728px; margin: 0 auto 16px; background: #fef2f2; border: 1px solid #f87171; color: #991b1b; padding: 12px 18px; border-radius: 6px; font-size: 0.85rem; text-align: center;">
+            <strong>⚠️ Ad Blocker Detected:</strong> An ad blocker extension (e.g. Brave Shields, uBlock Origin, Adblock) is active. Please pause it for localhost to see live ads and tracking beacons.
+        </div>
+
         <!-- Top Leaderboard Ad Slot (728x90) -->
         <div class="leaderboard-wrapper">
             <span class="ad-label">Advertisement (728x90 Leaderboard)</span>
@@ -692,6 +697,16 @@
             // Initial counter sync
             stats.requested = document.querySelectorAll('.ad-slot').length;
             statReq.textContent = stats.requested;
+
+            // Check if ad blocker extension is hiding slots or blocking requests
+            setTimeout(function () {
+                var slot = document.getElementById('slot-leaderboard');
+                var isBlocked = !window.MiniAdTag || (slot && (slot.offsetHeight === 0 || window.getComputedStyle(slot).display === 'none'));
+                if (isBlocked) {
+                    var notice = document.getElementById('adblock-notice');
+                    if (notice) notice.style.display = 'block';
+                }
+            }, 800);
         })();
     </script>
 </body>
