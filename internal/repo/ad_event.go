@@ -84,3 +84,73 @@ func (r *AdEventRepo) CountCreativeIPImpressions(ctx context.Context, creativeID
 	}
 	return count, nil
 }
+
+// GetCampaignReport aggregates impressions and clicks per campaign for the given time range.
+func (r *AdEventRepo) GetCampaignReport(ctx context.Context, fromTime, toTime time.Time) ([]*model.CampaignReportRow, error) {
+	query := `
+		SELECT 
+			c.id AS campaign_id,
+			c.name AS campaign_name,
+			COUNT(CASE WHEN e.type = 'impression' THEN 1 END) AS impressions,
+			COUNT(CASE WHEN e.type = 'click' THEN 1 END) AS clicks
+		FROM ad_events e
+		JOIN campaigns c ON e.campaign_id = c.id
+		WHERE e.created_at >= $1 AND e.created_at < $2
+		GROUP BY c.id, c.name
+		ORDER BY c.id ASC
+	`
+	rows, err := r.pool.Query(ctx, query, fromTime, toTime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query campaign report: %w", err)
+	}
+	defer rows.Close()
+
+	var report []*model.CampaignReportRow
+	for rows.Next() {
+		row := &model.CampaignReportRow{}
+		if err := rows.Scan(
+			&row.CampaignID,
+			&row.CampaignName,
+			&row.Impressions,
+			&row.Clicks,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan campaign report row: %w", err)
+		}
+		report = append(report, row)
+	}
+	return report, rows.Err()
+}
+
+// GetDayReport aggregates impressions and clicks per day for the given time range.
+func (r *AdEventRepo) GetDayReport(ctx context.Context, fromTime, toTime time.Time) ([]*model.DayReportRow, error) {
+	query := `
+		SELECT 
+			TO_CHAR(e.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS report_date,
+			COUNT(CASE WHEN e.type = 'impression' THEN 1 END) AS impressions,
+			COUNT(CASE WHEN e.type = 'click' THEN 1 END) AS clicks
+		FROM ad_events e
+		WHERE e.created_at >= $1 AND e.created_at < $2
+		GROUP BY report_date
+		ORDER BY report_date ASC
+	`
+	rows, err := r.pool.Query(ctx, query, fromTime, toTime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query day report: %w", err)
+	}
+	defer rows.Close()
+
+	var report []*model.DayReportRow
+	for rows.Next() {
+		row := &model.DayReportRow{}
+		if err := rows.Scan(
+			&row.Date,
+			&row.Impressions,
+			&row.Clicks,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan day report row: %w", err)
+		}
+		report = append(report, row)
+	}
+	return report, rows.Err()
+}
+

@@ -95,10 +95,14 @@ func NewRouter(cfg RouterConfig) chi.Router {
 	trackingService := service.NewTrackingService(creativeRepo, eventRepo, cfg.Redis)
 	trackingHandler := handler.NewTrackingHandler(trackingService)
 
+	reportService := service.NewReportService(eventRepo)
+	reportHandler := handler.NewReportHandler(reportService)
+
 	// 4. API Endpoints
 	r.Get("/ad", adHandler.ServeAd)
 	r.Get("/track/impression", trackingHandler.TrackImpression)
 	r.Get("/track/click", trackingHandler.TrackClick)
+	r.Get("/report", reportHandler.GetReport)
 
 	r.Route("/campaigns", func(r chi.Router) {
 		r.Post("/", campaignHandler.Create)
