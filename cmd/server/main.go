@@ -19,6 +19,7 @@ import (
 	"github.com/nirob844/mini-ad-server/internal/db"
 	"github.com/nirob844/mini-ad-server/internal/handler"
 	"github.com/nirob844/mini-ad-server/internal/repo"
+	"github.com/nirob844/mini-ad-server/internal/service"
 )
 
 func main() {
@@ -83,13 +84,15 @@ func main() {
 		})
 	})
 
-	// 6. Initialize Repositories and Handlers
+	// 6. Initialize Repositories, Services, and Handlers
 	campaignRepo := repo.NewCampaignRepo(pool)
-	campaignHandler := handler.NewCampaignHandler(campaignRepo)
+	campaignService := service.NewCampaignService(campaignRepo)
+	campaignHandler := handler.NewCampaignHandler(campaignService)
 
 	// Campaign endpoints
 	r.Post("/campaigns", campaignHandler.Create)
 	r.Patch("/campaigns/{id}", campaignHandler.UpdateStatus)
+	r.Get("/campaigns/{id}", campaignHandler.GetByID)
 	r.Get("/campaigns", campaignHandler.List)
 
 	// 7. Serve static files from web/ folder (e.g. / -> web/index.html, /publisher.html)

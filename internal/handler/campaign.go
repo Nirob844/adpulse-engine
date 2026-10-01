@@ -10,17 +10,17 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/nirob844/mini-ad-server/internal/model"
-	"github.com/nirob844/mini-ad-server/internal/repo"
+	"github.com/nirob844/mini-ad-server/internal/service"
 )
 
-// CampaignHandler handles campaign management HTTP requests.
+// CampaignHandler handles campaign management HTTP requests via CampaignService.
 type CampaignHandler struct {
-	repo *repo.CampaignRepo
+	service *service.CampaignService
 }
 
 // NewCampaignHandler creates a new CampaignHandler.
-func NewCampaignHandler(r *repo.CampaignRepo) *CampaignHandler {
-	return &CampaignHandler{repo: r}
+func NewCampaignHandler(s *service.CampaignService) *CampaignHandler {
+	return &CampaignHandler{service: s}
 }
 
 type createCampaignPayload struct {
@@ -39,10 +39,10 @@ func (h *CampaignHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, "request body is required")
 		return
 	}
-	defer r.Body.Close()
-
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	decoder := json.NewDecoder(r.Body)
 	decoder.UseNumber()
+	decoder.DisallowUnknownFields()
 
 	var payload createCampaignPayload
 	if err := decoder.Decode(&payload); err != nil {
@@ -83,7 +83,7 @@ func (h *CampaignHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. Validate status (optional, default: "active", allowed: "active" | "paused")
+	// 3. Status handling (optional, default: "active", allowed: "active" | "paused")
 	status := model.CampaignStatusActive
 	if payload.Status != nil {
 		statusStr, ok := payload.Status.(string)
@@ -99,9 +99,13 @@ func (h *CampaignHandler) Create(w http.ResponseWriter, r *http.Request) {
 		status = trimmedStatus
 	}
 
-	// 4. Insert into database
-	camp, err := h.repo.Create(r.Context(), name, int(limitVal), status)
+	// 4. Delegate to CampaignService
+	camp, err := h.service.CreateCampaign(r.Context(), name, int(limitVal), status)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidName) || errors.Is(err, service.ErrInvalidLimit) || errors.Is(err, service.ErrInvalidStatus) {
+			writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		writeJSONError(w, http.StatusInternalServerError, "failed to create campaign: "+err.Error())
 		return
 	}
@@ -124,10 +128,12 @@ func (h *CampaignHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, "request body is required")
 		return
 	}
-	defer r.Body.Close()
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 
 	var payload updateCampaignPayload
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := decoder.Decode(&payload); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid request payload: "+err.Error())
 		return
 	}
@@ -148,11 +154,15 @@ func (h *CampaignHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update status in repository
-	camp, err := h.repo.UpdateStatus(r.Context(), id, trimmedStatus)
+	// Update status via CampaignService
+	camp, err := h.service.UpdateStatus(r.Context(), id, trimmedStatus)
 	if err != nil {
-		if errors.Is(err, repo.ErrNotFound) {
+		if errors.Is(err, service.ErrCampaignNotFound) {
 			writeJSONError(w, http.StatusNotFound, "campaign not found")
+			return
+		}
+		if errors.Is(err, service.ErrInvalidStatus) {
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		writeJSONError(w, http.StatusInternalServerError, "failed to update campaign: "+err.Error())
@@ -164,9 +174,32 @@ func (h *CampaignHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(camp)
 }
 
+// GetByID handles GET /campaigns/:id
+func (h *CampaignHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil || id <= 0 {
+		writeJSONError(w, http.StatusBadRequest, "invalid campaign id, must be a positive integer")
+		return
+	}
+
+	camp, err := h.service.GetCampaign(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, service.ErrCampaignNotFound) {
+			writeJSONError(w, http.StatusNotFound, "campaign not found")
+			return
+		}
+		writeJSONError(w, http.StatusInternalServerError, "failed to get campaign: "+err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(camp)
+}
+
 // List handles GET /campaigns
 func (h *CampaignHandler) List(w http.ResponseWriter, r *http.Request) {
-	campaigns, err := h.repo.ListAll(r.Context())
+	campaigns, err := h.service.ListCampaigns(r.Context())
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "failed to list campaigns: "+err.Error())
 		return

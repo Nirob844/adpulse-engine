@@ -16,6 +16,7 @@ import (
 	"github.com/nirob844/mini-ad-server/internal/db"
 	"github.com/nirob844/mini-ad-server/internal/model"
 	"github.com/nirob844/mini-ad-server/internal/repo"
+	"github.com/nirob844/mini-ad-server/internal/service"
 )
 
 func setupTestRouter(t *testing.T) (chi.Router, *repo.CampaignRepo) {
@@ -37,7 +38,8 @@ func setupTestRouter(t *testing.T) (chi.Router, *repo.CampaignRepo) {
 	_ = db.RunMigrations(ctx, pool, "../../migrations/001_init.sql")
 
 	campaignRepo := repo.NewCampaignRepo(pool)
-	campaignHandler := NewCampaignHandler(campaignRepo)
+	campaignService := service.NewCampaignService(campaignRepo)
+	campaignHandler := NewCampaignHandler(campaignService)
 
 	r := chi.NewRouter()
 	r.Post("/campaigns", campaignHandler.Create)
