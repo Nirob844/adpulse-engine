@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/nirob844/mini-ad-server/internal/cache"
 	"github.com/nirob844/mini-ad-server/internal/config"
 	"github.com/nirob844/mini-ad-server/internal/db"
 	"github.com/nirob844/mini-ad-server/internal/server"
@@ -45,15 +46,29 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 4. Initialize Router
+	// 4. Redis connection (graceful fallback if unavailable)
+	var redisClient *cache.Client
+	if cfg.RedisURL != "" {
+		rc, err := cache.Connect(cfg.RedisURL)
+		if err != nil {
+			slog.Warn("Redis connection failed, continuing without cache", "error", err)
+		} else {
+			slog.Info("Connected to Redis successfully", "url", cfg.RedisURL)
+			redisClient = rc
+			defer redisClient.Close()
+		}
+	}
+
+	// 5. Initialize Router
 	workDir, _ := os.Getwd()
 	r := server.NewRouter(server.RouterConfig{
 		Pool:   pool,
+		Redis:  redisClient,
 		Config: cfg,
 		WebDir: filepath.Join(workDir, "web"),
 	})
 
-	// 5. Start HTTP server with graceful shutdown
+	// 6. Start HTTP server with graceful shutdown
 	if err := server.Run(r, cfg.ServerPort); err != nil {
 		slog.Error("HTTP server terminated with error", "error", err)
 		os.Exit(1)

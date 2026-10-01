@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/nirob844/mini-ad-server/internal/cache"
 	"github.com/nirob844/mini-ad-server/internal/config"
 	"github.com/nirob844/mini-ad-server/internal/handler"
 	"github.com/nirob844/mini-ad-server/internal/repo"
@@ -20,6 +21,7 @@ import (
 // RouterConfig defines dependencies required to build the Chi router.
 type RouterConfig struct {
 	Pool   *pgxpool.Pool
+	Redis  *cache.Client
 	Config *config.Config
 	WebDir string
 }
@@ -50,9 +52,19 @@ func NewRouter(cfg RouterConfig) chi.Router {
 			}
 		}
 
+		redisStatus := "disabled"
+		if cfg.Redis != nil {
+			if err := cfg.Redis.Ping(pingCtx); err != nil {
+				redisStatus = "disconnected: " + err.Error()
+			} else {
+				redisStatus = "connected"
+			}
+		}
+
 		handler.WriteJSON(w, statusCode, map[string]any{
 			"status":   "ok",
 			"database": dbStatus,
+			"redis":    redisStatus,
 			"time":     time.Now().UTC().Format(time.RFC3339),
 		})
 	})
@@ -60,9 +72,11 @@ func NewRouter(cfg RouterConfig) chi.Router {
 	// 3. Initialize Repositories and Services
 	var campaignRepo *repo.CampaignRepo
 	var creativeRepo *repo.CreativeRepo
+	var eventRepo *repo.AdEventRepo
 	if cfg.Pool != nil {
 		campaignRepo = repo.NewCampaignRepo(cfg.Pool)
 		creativeRepo = repo.NewCreativeRepo(cfg.Pool)
+		eventRepo = repo.NewAdEventRepo(cfg.Pool)
 	}
 
 	campaignService := service.NewCampaignService(campaignRepo)
@@ -71,7 +85,16 @@ func NewRouter(cfg RouterConfig) chi.Router {
 	creativeService := service.NewCreativeService(creativeRepo, campaignRepo)
 	creativeHandler := handler.NewCreativeHandler(creativeService)
 
-	// 4. API Route Groups
+	freqCapMax := 3
+	if cfg.Config != nil && cfg.Config.FrequencyCapMax > 0 {
+		freqCapMax = cfg.Config.FrequencyCapMax
+	}
+	adService := service.NewAdService(creativeRepo, eventRepo, cfg.Redis, freqCapMax)
+	adHandler := handler.NewAdHandler(adService)
+
+	// 4. API Endpoints
+	r.Get("/ad", adHandler.ServeAd)
+
 	r.Route("/campaigns", func(r chi.Router) {
 		r.Post("/", campaignHandler.Create)
 		r.Get("/", campaignHandler.List)
