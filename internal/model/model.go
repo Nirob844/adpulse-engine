@@ -23,6 +23,7 @@ type Campaign struct {
 	Status               string    `json:"status" db:"status"`
 	DailyImpressionLimit int       `json:"daily_impression_limit" db:"daily_impression_limit"`
 	CreatedAt            time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // Creative represents an ad creative banner under a campaign.
