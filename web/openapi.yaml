@@ -6,10 +6,10 @@ info:
     Provides campaign management, real-time ad selection, pixel tracking, and CTR reporting.
   version: 1.0.0
 servers:
+  - url: /
+    description: Current Server (Dynamic Production & Localhost)
   - url: http://localhost:8000
     description: Local Development Server
-  - url: /
-    description: Current Server
 
 tags:
   - name: Campaigns
@@ -49,6 +49,27 @@ paths:
                     example: "2026-10-01T10:00:00Z"
         "503":
           description: Database connection is unavailable
+
+  /config:
+    get:
+      tags:
+        - System
+      summary: Runtime configuration endpoint
+      description: Returns canonical application base URL and version for dynamic client discovery.
+      responses:
+        "200":
+          description: Application configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  app_url:
+                    type: string
+                    example: "http://localhost:8000"
+                  version:
+                    type: string
+                    example: "1.0.0"
 
   /campaigns:
     post:

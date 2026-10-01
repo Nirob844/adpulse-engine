@@ -16,7 +16,30 @@
 
     var MiniAdTag = {
         version: '1.0.0',
-        apiBase: (typeof window !== 'undefined' && window.location && window.location.port !== '8000') ? 'http://localhost:8000' : '',
+        apiBase: (function () {
+            if (typeof window !== 'undefined' && window.ADSERVER_URL) {
+                return window.ADSERVER_URL.replace(/\/$/, '');
+            }
+            if (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) {
+                try {
+                    var scriptUrl = new URL(document.currentScript.src);
+                    // If loaded locally on dev frontend server (e.g. Live Server on port 5500), route to backend on 8000
+                    if ((scriptUrl.hostname === 'localhost' || scriptUrl.hostname === '127.0.0.1') && scriptUrl.port && scriptUrl.port !== '8000') {
+                        return 'http://localhost:8000';
+                    }
+                    if (scriptUrl.origin && scriptUrl.origin !== 'null') return scriptUrl.origin;
+                } catch (e) {}
+            }
+            if (typeof window !== 'undefined' && window.location) {
+                var host = window.location.hostname;
+                var port = window.location.port;
+                if ((host === 'localhost' || host === '127.0.0.1') && port && port !== '8000') {
+                    return 'http://localhost:8000';
+                }
+                return window.location.origin || '';
+            }
+            return '';
+        })(),
         simulatedIP: '',
 
         /**

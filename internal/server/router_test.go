@@ -119,4 +119,16 @@ func TestRouterHealthAndCORS(t *testing.T) {
 	if wPutCreative.Code != http.StatusBadRequest {
 		t.Errorf("expected 400 Bad Request for invalid id, got %d", wPutCreative.Code)
 	}
+
+	// 11. Test /config endpoint
+	reqConfig := httptest.NewRequest(http.MethodGet, "/config", nil)
+	wConfig := httptest.NewRecorder()
+	r.ServeHTTP(wConfig, reqConfig)
+	if wConfig.Code != http.StatusOK {
+		t.Errorf("expected 200 OK for /config, got %d", wConfig.Code)
+	}
+	bodyConfig := wConfig.Body.String()
+	if !strings.Contains(bodyConfig, "app_url") {
+		t.Errorf("expected /config response to contain 'app_url', got %s", bodyConfig)
+	}
 }

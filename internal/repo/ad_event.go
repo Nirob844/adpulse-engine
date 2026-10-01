@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nirob844/mini-ad-server/internal/model"
 )
@@ -40,6 +41,34 @@ func (r *AdEventRepo) RecordEvent(ctx context.Context, campaignID, creativeID in
 		return nil, fmt.Errorf("failed to record ad event: %w", err)
 	}
 	return event, nil
+}
+
+// BatchInsert inserts a slice of ad events in bulk using PostgreSQL's binary COPY protocol.
+func (r *AdEventRepo) BatchInsert(ctx context.Context, events []*model.AdEvent) error {
+	if len(events) == 0 || r.pool == nil {
+		return nil
+	}
+
+	rows := make([][]any, len(events))
+	now := time.Now().UTC()
+	for i, e := range events {
+		createdAt := e.CreatedAt
+		if createdAt.IsZero() {
+			createdAt = now
+		}
+		rows[i] = []any{e.CampaignID, e.CreativeID, e.Type, e.IP, e.UserAgent, createdAt}
+	}
+
+	_, err := r.pool.CopyFrom(
+		ctx,
+		pgx.Identifier{"ad_events"},
+		[]string{"campaign_id", "creative_id", "type", "ip", "user_agent", "created_at"},
+		pgx.CopyFromRows(rows),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to bulk copy ad events: %w", err)
+	}
+	return nil
 }
 
 // CountDailyImpressions returns the number of impressions for a campaign on a given UTC date.

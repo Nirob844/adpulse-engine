@@ -923,7 +923,7 @@
                     </div>
                     <div class="form-group">
                         <label for="creat-image-url">Image URL *</label>
-                        <input type="text" id="creat-image-url" class="form-control" placeholder="http://localhost:8000/assets/creative_techbrand_728x90.svg" required>
+                        <input type="text" id="creat-image-url" class="form-control" placeholder="/assets/creative_techbrand_728x90.svg or https://..." required>
                     </div>
                     <div class="form-group">
                         <label for="creat-click-url">Landing Page Click Destination *</label>
@@ -986,7 +986,13 @@
         (function () {
             'use strict';
 
-            var apiBase = (window.location && window.location.port !== '8000') ? 'http://localhost:8000' : '';
+            var host = (window.location && window.location.hostname) || '';
+            var port = (window.location && window.location.port) || '';
+            var apiBase = window.ADSERVER_URL || '';
+            // If running on local dev frontend server (e.g. Live Server on port 5500), route to Go backend port 8000
+            if (!apiBase && (host === 'localhost' || host === '127.0.0.1') && port && port !== '8000') {
+                apiBase = 'http://localhost:8000';
+            }
             var state = {
                 campaigns: [],
                 creatives: [],
@@ -1319,7 +1325,7 @@
                 if (mode === 'create') {
                     var imgInput = document.getElementById('creat-image-url');
                     if (!imgInput.value || imgInput.value.indexOf('/assets/creative_') !== -1) {
-                        imgInput.value = 'http://localhost:8000/assets/creative_techbrand_' + sizeVal + '.svg';
+                        imgInput.value = '/assets/creative_techbrand_' + sizeVal + '.svg';
                     }
                 }
             };
@@ -1536,7 +1542,7 @@
                 }
                 updateCampaignDropdowns();
                 document.getElementById('creat-size').value = '728x90';
-                document.getElementById('creat-image-url').value = 'http://localhost:8000/assets/creative_techbrand_728x90.svg';
+                document.getElementById('creat-image-url').value = '/assets/creative_techbrand_728x90.svg';
                 document.getElementById('modal-create-creative').classList.add('active');
             };
 

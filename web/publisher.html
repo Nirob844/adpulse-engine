@@ -882,9 +882,15 @@
                 }
             };
 
-            // Adjust links if loaded from Live Server (e.g. port 5500)
-            if (window.location.port !== '8000') {
-                var backendOrigin = 'http://localhost:8000';
+            // Adjust links if loaded from Live Server (e.g. port 5500) or custom ADSERVER_URL
+            var host = (window.location && window.location.hostname) || '';
+            var port = (window.location && window.location.port) || '';
+            var backendOrigin = window.ADSERVER_URL || '';
+            if (!backendOrigin && (host === 'localhost' || host === '127.0.0.1') && port && port !== '8000') {
+                backendOrigin = 'http://localhost:8000';
+            }
+            if (backendOrigin) {
+                backendOrigin = backendOrigin.replace(/\/$/, '');
                 var links = document.querySelectorAll('a[href^="/"]');
                 for (var i = 0; i < links.length; i++) {
                     links[i].href = backendOrigin + links[i].getAttribute('href');

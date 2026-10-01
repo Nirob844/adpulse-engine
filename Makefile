@@ -52,3 +52,12 @@ redis-cli: ## Open interactive Redis CLI
 
 redis-flush: ## Flush all Redis cache keys
 	docker compose exec redis redis-cli flushall
+
+bench: ## Run high-concurrency benchmark (5000 requests, 50 workers, mixed workload)
+	go run ./cmd/bench -requests 5000 -concurrency 50 -scenario mixed
+
+bench-ad: ## Run high-concurrency ad-serving latency benchmark
+	go run ./cmd/bench -requests 5000 -concurrency 50 -scenario ad
+
+bench-imp: ## Run high-concurrency impression ingestion benchmark
+	go run ./cmd/bench -requests 5000 -concurrency 50 -scenario impression

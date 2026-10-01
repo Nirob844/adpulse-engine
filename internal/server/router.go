@@ -20,10 +20,11 @@ import (
 
 // RouterConfig defines dependencies required to build the Chi router.
 type RouterConfig struct {
-	Pool   *pgxpool.Pool
-	Redis  *cache.Client
-	Config *config.Config
-	WebDir string
+	Pool     *pgxpool.Pool
+	Redis    *cache.Client
+	Config   *config.Config
+	WebDir   string
+	Ingester *service.EventIngester
 }
 
 // NewRouter constructs and configures the complete application Chi router.
@@ -92,13 +93,45 @@ func NewRouter(cfg RouterConfig) chi.Router {
 	adService := service.NewAdService(creativeRepo, eventRepo, cfg.Redis, freqCapMax)
 	adHandler := handler.NewAdHandler(adService)
 
-	trackingService := service.NewTrackingService(creativeRepo, eventRepo, cfg.Redis)
+	var ingester *service.EventIngester
+	if cfg.Ingester != nil {
+		ingester = cfg.Ingester
+	} else if eventRepo != nil {
+		batchSize := 100
+		flushInterval := 100 * time.Millisecond
+		if cfg.Config != nil {
+			if cfg.Config.BatchSize > 0 {
+				batchSize = cfg.Config.BatchSize
+			}
+			if cfg.Config.BatchFlushInterval > 0 {
+				flushInterval = cfg.Config.BatchFlushInterval
+			}
+		}
+		ingester = service.NewEventIngester(eventRepo, service.IngesterConfig{
+			BatchSize:     batchSize,
+			FlushInterval: flushInterval,
+			QueueCapacity: 10000,
+		})
+		ingester.Start()
+	}
+
+	trackingService := service.NewTrackingService(creativeRepo, eventRepo, cfg.Redis, ingester)
 	trackingHandler := handler.NewTrackingHandler(trackingService)
 
 	reportService := service.NewReportService(eventRepo)
 	reportHandler := handler.NewReportHandler(reportService)
 
 	// 4. API Endpoints
+	r.Get("/config", func(w http.ResponseWriter, r *http.Request) {
+		appURL := "http://localhost:8000"
+		if cfg.Config != nil && cfg.Config.AppURL != "" {
+			appURL = cfg.Config.AppURL
+		}
+		handler.WriteJSON(w, http.StatusOK, map[string]string{
+			"app_url": appURL,
+			"version": "1.0.0",
+		})
+	})
 	r.Get("/ad", adHandler.ServeAd)
 	r.Get("/track/impression", trackingHandler.TrackImpression)
 	r.Get("/track/click", trackingHandler.TrackClick)

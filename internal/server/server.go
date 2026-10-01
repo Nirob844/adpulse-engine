@@ -13,7 +13,7 @@ import (
 
 // Run starts the HTTP server on the given port and blocks until an interrupt signal is received,
 // performing a graceful shutdown with a 10-second timeout.
-func Run(handler http.Handler, port string) error {
+func Run(handler http.Handler, port string, onShutdown ...func()) error {
 	addr := ":" + port
 	srv := &http.Server{
 		Addr:         addr,
@@ -49,6 +49,12 @@ func Run(handler http.Handler, port string) error {
 	if err := srv.Shutdown(ctx); err != nil {
 		slog.Error("Server forced to shutdown", "error", err)
 		return err
+	}
+
+	for _, fn := range onShutdown {
+		if fn != nil {
+			fn()
+		}
 	}
 
 	slog.Info("Server stopped cleanly")

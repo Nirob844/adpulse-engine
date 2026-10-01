@@ -55,3 +55,30 @@ func TestConfigLoad_FallbackFrequencyCapMax(t *testing.T) {
 		t.Errorf("expected FrequencyCapMax 5, got %d", cfg.FrequencyCapMax)
 	}
 }
+
+func TestConfigLoad_AppURL(t *testing.T) {
+	// 1. Explicit APP_URL with trailing slash
+	_ = os.Setenv("APP_URL", "https://ads.myproduction.com/")
+	defer os.Unsetenv("APP_URL")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("expected no error loading config, got %v", err)
+	}
+	if cfg.AppURL != "https://ads.myproduction.com" {
+		t.Errorf("expected AppURL 'https://ads.myproduction.com', got '%s'", cfg.AppURL)
+	}
+
+	// 2. Fallback to BASE_URL
+	_ = os.Unsetenv("APP_URL")
+	_ = os.Setenv("BASE_URL", "https://base.example.com")
+	defer os.Unsetenv("BASE_URL")
+
+	cfg, err = Load()
+	if err != nil {
+		t.Fatalf("expected no error loading config, got %v", err)
+	}
+	if cfg.AppURL != "https://base.example.com" {
+		t.Errorf("expected AppURL 'https://base.example.com', got '%s'", cfg.AppURL)
+	}
+}

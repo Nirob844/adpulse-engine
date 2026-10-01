@@ -30,15 +30,26 @@ type TrackingService struct {
 	creativeRepo TrackingCreativeRepo
 	eventRepo    TrackingEventRepo
 	cache        TrackingCache
+	ingester     *EventIngester
 }
 
-// NewTrackingService creates a new TrackingService.
-func NewTrackingService(cr TrackingCreativeRepo, er TrackingEventRepo, cache TrackingCache) *TrackingService {
+// NewTrackingService creates a new TrackingService with optional async event ingester.
+func NewTrackingService(cr TrackingCreativeRepo, er TrackingEventRepo, cache TrackingCache, ingester ...*EventIngester) *TrackingService {
+	var ing *EventIngester
+	if len(ingester) > 0 {
+		ing = ingester[0]
+	}
 	return &TrackingService{
 		creativeRepo: cr,
 		eventRepo:    er,
 		cache:        cache,
+		ingester:     ing,
 	}
+}
+
+// SetIngester configures an asynchronous event ingester.
+func (s *TrackingService) SetIngester(ing *EventIngester) {
+	s.ingester = ing
 }
 
 // TrackImpression validates creative existence, persists the impression event, and increments daily/frequency counters.
@@ -55,9 +66,22 @@ func (s *TrackingService) TrackImpression(ctx context.Context, creativeID int64,
 		return fmt.Errorf("failed to get creative for impression: %w", err)
 	}
 
-	// Persist event in database
-	if s.eventRepo != nil {
-		_, err = s.eventRepo.RecordEvent(ctx, cr.CampaignID, cr.ID, model.EventTypeImpression, ip, userAgent)
+	event := &model.AdEvent{
+		CampaignID: cr.CampaignID,
+		CreativeID: cr.ID,
+		Type:       model.EventTypeImpression,
+		IP:         ip,
+		UserAgent:  userAgent,
+		CreatedAt:  time.Now().UTC(),
+	}
+
+	// Persist event (asynchronous batch ingester with synchronous fallback)
+	if s.ingester != nil {
+		if !s.ingester.Enqueue(event) && s.eventRepo != nil {
+			_, _ = s.eventRepo.RecordEvent(ctx, event.CampaignID, event.CreativeID, event.Type, event.IP, event.UserAgent)
+		}
+	} else if s.eventRepo != nil {
+		_, err = s.eventRepo.RecordEvent(ctx, event.CampaignID, event.CreativeID, event.Type, event.IP, event.UserAgent)
 		if err != nil {
 			return fmt.Errorf("failed to record impression event: %w", err)
 		}
@@ -86,9 +110,22 @@ func (s *TrackingService) TrackClick(ctx context.Context, creativeID int64, ip, 
 		return "", fmt.Errorf("failed to get creative for click: %w", err)
 	}
 
-	// Persist click event in database
-	if s.eventRepo != nil {
-		_, err = s.eventRepo.RecordEvent(ctx, cr.CampaignID, cr.ID, model.EventTypeClick, ip, userAgent)
+	event := &model.AdEvent{
+		CampaignID: cr.CampaignID,
+		CreativeID: cr.ID,
+		Type:       model.EventTypeClick,
+		IP:         ip,
+		UserAgent:  userAgent,
+		CreatedAt:  time.Now().UTC(),
+	}
+
+	// Persist click event (asynchronous batch ingester with synchronous fallback)
+	if s.ingester != nil {
+		if !s.ingester.Enqueue(event) && s.eventRepo != nil {
+			_, _ = s.eventRepo.RecordEvent(ctx, event.CampaignID, event.CreativeID, event.Type, event.IP, event.UserAgent)
+		}
+	} else if s.eventRepo != nil {
+		_, err = s.eventRepo.RecordEvent(ctx, event.CampaignID, event.CreativeID, event.Type, event.IP, event.UserAgent)
 		if err != nil {
 			return "", fmt.Errorf("failed to record click event: %w", err)
 		}

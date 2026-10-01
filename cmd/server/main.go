@@ -10,7 +10,9 @@ import (
 	"github.com/nirob844/mini-ad-server/internal/cache"
 	"github.com/nirob844/mini-ad-server/internal/config"
 	"github.com/nirob844/mini-ad-server/internal/db"
+	"github.com/nirob844/mini-ad-server/internal/repo"
 	"github.com/nirob844/mini-ad-server/internal/server"
+	"github.com/nirob844/mini-ad-server/internal/service"
 )
 
 func main() {
@@ -59,17 +61,29 @@ func main() {
 		}
 	}
 
-	// 5. Initialize Router
+	// 5. Initialize Asynchronous Event Ingester & Router
+	eventRepo := repo.NewAdEventRepo(pool)
+	ingester := service.NewEventIngester(eventRepo, service.IngesterConfig{
+		BatchSize:     cfg.BatchSize,
+		FlushInterval: cfg.BatchFlushInterval,
+		QueueCapacity: 10000,
+	})
+	ingester.Start()
+
 	workDir, _ := os.Getwd()
 	r := server.NewRouter(server.RouterConfig{
-		Pool:   pool,
-		Redis:  redisClient,
-		Config: cfg,
-		WebDir: filepath.Join(workDir, "web"),
+		Pool:     pool,
+		Redis:    redisClient,
+		Config:   cfg,
+		WebDir:   filepath.Join(workDir, "web"),
+		Ingester: ingester,
 	})
 
-	// 6. Start HTTP server with graceful shutdown
-	if err := server.Run(r, cfg.ServerPort); err != nil {
+	// 6. Start HTTP server with graceful shutdown and ingester flush
+	if err := server.Run(r, cfg.ServerPort, func() {
+		slog.Info("Flushing remaining in-flight events before shutdown...")
+		ingester.Stop()
+	}); err != nil {
 		slog.Error("HTTP server terminated with error", "error", err)
 		os.Exit(1)
 	}

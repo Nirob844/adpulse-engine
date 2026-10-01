@@ -15,20 +15,20 @@ INSERT INTO campaigns (id, name, status, daily_impression_limit, created_at, upd
 -- 2. Insert Creatives (Every campaign has both 300x250 and 728x90)
 INSERT INTO creatives (id, campaign_id, width, height, image_url, click_url, created_at) VALUES
 -- Campaign 1: TechBrand NextGen Laptop (Active)
-(1, 1, 300, 250, 'http://localhost:8000/assets/creative_techbrand_300x250.svg', 'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '3 days'),
-(2, 1, 728, 90,  'http://localhost:8000/assets/creative_techbrand_728x90.svg',   'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '3 days'),
+(1, 1, 300, 250, '/assets/creative_techbrand_300x250.svg', 'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '3 days'),
+(2, 1, 728, 90,  '/assets/creative_techbrand_728x90.svg',   'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '3 days'),
 
 -- Campaign 2: CloudDev Serverless Platform (Active)
-(3, 2, 300, 250, 'http://localhost:8000/assets/creative_clouddev_300x250.svg',  'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '2 days'),
-(4, 2, 728, 90,  'http://localhost:8000/assets/creative_clouddev_728x90.svg',   'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '2 days'),
+(3, 2, 300, 250, '/assets/creative_clouddev_300x250.svg',  'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '2 days'),
+(4, 2, 728, 90,  '/assets/creative_clouddev_728x90.svg',   'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '2 days'),
 
 -- Campaign 3: CoffeeRoast Artisanal Beans (Active)
-(5, 3, 300, 250, 'http://localhost:8000/assets/creative_coffee_300x250.svg',    'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '2 days'),
-(6, 3, 728, 90,  'http://localhost:8000/assets/creative_coffee_728x90.svg',     'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '2 days'),
+(5, 3, 300, 250, '/assets/creative_coffee_300x250.svg',    'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '2 days'),
+(6, 3, 728, 90,  '/assets/creative_coffee_728x90.svg',     'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '2 days'),
 
 -- Campaign 4: Summer Flash Sale (Paused)
-(7, 4, 300, 250, 'http://localhost:8000/assets/creative_techbrand_300x250.svg', 'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '5 days'),
-(8, 4, 728, 90,  'http://localhost:8000/assets/creative_techbrand_728x90.svg',   'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '5 days');
+(7, 4, 300, 250, '/assets/creative_techbrand_300x250.svg', 'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '5 days'),
+(8, 4, 728, 90,  '/assets/creative_techbrand_728x90.svg',   'https://portfolio-nirob-hosen-alip.vercel.app/', NOW() - INTERVAL '5 days');
 
 -- Reset sequences to align with inserted IDs
 SELECT setval('campaigns_id_seq', (SELECT MAX(id) FROM campaigns));

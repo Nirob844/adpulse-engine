@@ -11,6 +11,7 @@ import (
 // Config holds the application configuration parameters.
 type Config struct {
 	ServerPort         string
+	AppURL             string
 	DatabaseURL        string
 	RedisURL           string
 	FrequencyCapMax    int
@@ -27,6 +28,12 @@ func Load() (*Config, error) {
 	if port == "" {
 		port = getEnv("SERVER_PORT", "8000")
 	}
+
+	appURL := getEnv("APP_URL", "")
+	if appURL == "" {
+		appURL = getEnv("BASE_URL", "http://localhost:"+port)
+	}
+	appURL = strings.TrimRight(appURL, "/")
 
 	dbURL := getEnv("DATABASE_URL", "postgres://adserver:adserver_secret@localhost:5434/adserver_db?sslmode=disable")
 	redisURL := getEnv("REDIS_URL", "redis://localhost:6381/0")
@@ -47,6 +54,7 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		ServerPort:         port,
+		AppURL:             appURL,
 		DatabaseURL:        dbURL,
 		RedisURL:           redisURL,
 		FrequencyCapMax:    freqCap,
