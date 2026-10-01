@@ -47,6 +47,8 @@ func setupCreativeTestRouter(t *testing.T) (chi.Router, *repo.CreativeRepo, *rep
 	r.Post("/creatives", creativeHandler.Create)
 	r.Get("/creatives", creativeHandler.List)
 	r.Get("/creatives/{id}", creativeHandler.GetByID)
+	r.Put("/creatives/{id}", creativeHandler.Update)
+	r.Delete("/creatives/{id}", creativeHandler.Delete)
 
 	return r, creativeRepo, campaignRepo
 }
@@ -243,5 +245,159 @@ func TestGetAndListCreatives(t *testing.T) {
 	_ = json.NewDecoder(w.Body).Decode(&list)
 	if len(list) == 0 {
 		t.Errorf("expected at least 1 creative in list")
+	}
+}
+
+func TestUpdateCreative(t *testing.T) {
+	r, _, campRepo := setupCreativeTestRouter(t)
+	if r == nil {
+		return
+	}
+
+	camp, err := campRepo.Create(context.Background(), "Creative Update Campaign", 1000, "active")
+	if err != nil {
+		t.Fatalf("failed to create campaign: %v", err)
+	}
+
+	// 1. Create a creative
+	payload := map[string]any{
+		"campaign_id": camp.ID,
+		"width":       300,
+		"height":      250,
+		"image_url":   "https://placehold.co/300x250.png",
+		"click_url":   "https://example.com/product",
+	}
+	body, _ := json.Marshal(payload)
+	req := httptest.NewRequest(http.MethodPost, "/creatives", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("failed to create creative: %s", w.Body.String())
+	}
+
+	var created model.Creative
+	_ = json.NewDecoder(w.Body).Decode(&created)
+
+	// 2. Successful PUT update
+	updatePayload := map[string]any{
+		"campaign_id": camp.ID,
+		"width":       728,
+		"height":      90,
+		"image_url":   "https://placehold.co/728x90.png",
+		"click_url":   "https://example.com/updated-product",
+	}
+	body, _ = json.Marshal(updatePayload)
+	req = httptest.NewRequest(http.MethodPut, "/creatives/"+strconv.FormatInt(created.ID, 10), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var updated model.Creative
+	_ = json.NewDecoder(w.Body).Decode(&updated)
+	if updated.Width != 728 || updated.Height != 90 || updated.ImageURL != "https://placehold.co/728x90.png" {
+		t.Errorf("unexpected updated creative: %+v", updated)
+	}
+
+	// 3. Validation error: invalid URL
+	badPayload := map[string]any{
+		"campaign_id": camp.ID,
+		"width":       728,
+		"height":      90,
+		"image_url":   "not-a-url",
+		"click_url":   "https://example.com/updated-product",
+	}
+	body, _ = json.Marshal(badPayload)
+	req = httptest.NewRequest(http.MethodPut, "/creatives/"+strconv.FormatInt(created.ID, 10), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for invalid image URL, got %d", w.Code)
+	}
+
+	// 4. Creative not found
+	req = httptest.NewRequest(http.MethodPut, "/creatives/999999", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected 404 for unknown creative, got %d", w.Code)
+	}
+
+	// 5. Invalid creative ID param
+	req = httptest.NewRequest(http.MethodPut, "/creatives/invalid-id", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for invalid creative ID, got %d", w.Code)
+	}
+}
+
+func TestDeleteCreative(t *testing.T) {
+	r, _, campRepo := setupCreativeTestRouter(t)
+	if r == nil {
+		return
+	}
+
+	camp, err := campRepo.Create(context.Background(), "Creative Delete Campaign", 1000, "active")
+	if err != nil {
+		t.Fatalf("failed to create campaign: %v", err)
+	}
+
+	payload := map[string]any{
+		"campaign_id": camp.ID,
+		"width":       300,
+		"height":      250,
+		"image_url":   "https://placehold.co/300x250.png",
+		"click_url":   "https://example.com/item",
+	}
+	body, _ := json.Marshal(payload)
+	req := httptest.NewRequest(http.MethodPost, "/creatives", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("failed to create creative: %s", w.Body.String())
+	}
+
+	var created model.Creative
+	_ = json.NewDecoder(w.Body).Decode(&created)
+
+	// 1. Successful DELETE -> 204 No Content
+	req = httptest.NewRequest(http.MethodDelete, "/creatives/"+strconv.FormatInt(created.ID, 10), nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected 204 No Content, got %d: %s", w.Code, w.Body.String())
+	}
+
+	// 2. Subsequent GET -> 404 Not Found
+	req = httptest.NewRequest(http.MethodGet, "/creatives/"+strconv.FormatInt(created.ID, 10), nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected 404 after deletion, got %d", w.Code)
+	}
+
+	// 3. Second DELETE -> 404 Not Found
+	req = httptest.NewRequest(http.MethodDelete, "/creatives/"+strconv.FormatInt(created.ID, 10), nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected 404 on already deleted creative, got %d", w.Code)
+	}
+
+	// 4. Invalid creative ID param
+	req = httptest.NewRequest(http.MethodDelete, "/creatives/abc", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for non-integer id, got %d", w.Code)
 	}
 }

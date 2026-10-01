@@ -207,3 +207,165 @@ func (h *CreativeHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	WriteJSON(w, http.StatusOK, creatives)
 }
+
+// Update handles PUT /creatives/:id
+func (h *CreativeHandler) Update(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil || id <= 0 {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid creative id, must be a positive integer")
+		return
+	}
+
+	if r.Body == nil {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "request body is required")
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	decoder := json.NewDecoder(r.Body)
+	decoder.UseNumber()
+	decoder.DisallowUnknownFields()
+
+	var payload createCreativePayload
+	if err := decoder.Decode(&payload); err != nil {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid request payload: "+err.Error())
+		return
+	}
+
+	// 1. Validate campaign_id (required positive integer)
+	if payload.CampaignID == nil {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "campaign_id is required")
+		return
+	}
+	campNum, ok := payload.CampaignID.(json.Number)
+	if !ok {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "campaign_id must be a number, string values are not allowed")
+		return
+	}
+	campRaw := campNum.String()
+	if strings.Contains(campRaw, ".") || strings.ContainsAny(campRaw, "eE") {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "campaign_id must be an integer, floats are not allowed")
+		return
+	}
+	campID, err := campNum.Int64()
+	if err != nil || campID <= 0 {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "campaign_id must be a positive integer")
+		return
+	}
+
+	// 2. Validate width (required positive integer)
+	if payload.Width == nil {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "width is required")
+		return
+	}
+	wNum, ok := payload.Width.(json.Number)
+	if !ok {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "width must be a number, string values are not allowed")
+		return
+	}
+	wRaw := wNum.String()
+	if strings.Contains(wRaw, ".") || strings.ContainsAny(wRaw, "eE") {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "width must be an integer, floats are not allowed")
+		return
+	}
+	widthVal, err := wNum.Int64()
+	if err != nil || widthVal <= 0 || widthVal > math.MaxInt32 {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "width must be a positive integer")
+		return
+	}
+
+	// 3. Validate height (required positive integer)
+	if payload.Height == nil {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "height is required")
+		return
+	}
+	hNum, ok := payload.Height.(json.Number)
+	if !ok {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "height must be a number, string values are not allowed")
+		return
+	}
+	hRaw := hNum.String()
+	if strings.Contains(hRaw, ".") || strings.ContainsAny(hRaw, "eE") {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "height must be an integer, floats are not allowed")
+		return
+	}
+	heightVal, err := hNum.Int64()
+	if err != nil || heightVal <= 0 || heightVal > math.MaxInt32 {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "height must be a positive integer")
+		return
+	}
+
+	// 4. Validate image_url (required string)
+	if payload.ImageURL == nil {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "image_url is required")
+		return
+	}
+	imageURLStr, ok := payload.ImageURL.(string)
+	if !ok || strings.TrimSpace(imageURLStr) == "" {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "image_url must be a non-empty string")
+		return
+	}
+
+	// 5. Validate click_url (required string)
+	if payload.ClickURL == nil {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "click_url is required")
+		return
+	}
+	clickURLStr, ok := payload.ClickURL.(string)
+	if !ok || strings.TrimSpace(clickURLStr) == "" {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "click_url must be a non-empty string")
+		return
+	}
+
+	// 6. Delegate to Service
+	req := model.CreateCreativeRequest{
+		CampaignID: campID,
+		Width:      int(widthVal),
+		Height:     int(heightVal),
+		ImageURL:   strings.TrimSpace(imageURLStr),
+		ClickURL:   strings.TrimSpace(clickURLStr),
+	}
+
+	cr, err := h.service.UpdateCreative(r.Context(), id, req)
+	if err != nil {
+		if errors.Is(err, service.ErrCreativeNotFound) {
+			WriteError(w, http.StatusNotFound, "NOT_FOUND", "creative not found")
+			return
+		}
+		if errors.Is(err, service.ErrCampaignNotFound) {
+			WriteError(w, http.StatusNotFound, "NOT_FOUND", "campaign not found")
+			return
+		}
+		if errors.Is(err, service.ErrInvalidImageURL) || errors.Is(err, service.ErrInvalidClickURL) ||
+			errors.Is(err, service.ErrInvalidWidth) || errors.Is(err, service.ErrInvalidHeight) ||
+			errors.Is(err, service.ErrInvalidCampaignID) || errors.Is(err, service.ErrInvalidCreativeID) {
+			WriteError(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
+			return
+		}
+		WriteError(w, http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "failed to update creative: "+err.Error())
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, cr)
+}
+
+// Delete handles DELETE /creatives/:id
+func (h *CreativeHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil || id <= 0 {
+		WriteError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid creative id, must be a positive integer")
+		return
+	}
+
+	if err := h.service.DeleteCreative(r.Context(), id); err != nil {
+		if errors.Is(err, service.ErrCreativeNotFound) {
+			WriteError(w, http.StatusNotFound, "NOT_FOUND", "creative not found")
+			return
+		}
+		WriteError(w, http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "failed to delete creative: "+err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

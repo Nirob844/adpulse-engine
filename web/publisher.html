@@ -647,6 +647,7 @@
                 <div class="inspector-actions">
                     <button class="btn btn-primary" id="btn-refresh" onclick="refreshAds()">Refresh Ad Slots</button>
                     <button class="btn" id="btn-clear-log" onclick="clearEventLog()">Clear Log</button>
+                    <a href="/admin" target="_blank" class="btn" style="background: #2563eb; color: #fff;">⚡ Admin Dashboard</a>
                     <a href="/docs" target="_blank" class="btn">API Docs</a>
                     <a href="/report?from=2026-09-25&to=2026-10-02" target="_blank" class="btn">View Live Report</a>
                 </div>
@@ -670,6 +671,7 @@
                 <div class="sim-group">
                     <span class="sim-badge" id="sim-active-badge">Active IP: Auto (Real IP)</span>
                     <button class="btn" style="padding: 4px 10px;" onclick="simulateImpressionBurst()" title="Simulate 3 rapid ad loads to test frequency cap">⚡ Quick 3x Load</button>
+                    <button class="btn" style="padding: 4px 10px; background: #ec4899; color: #fff; font-weight: 600;" onclick="simulateAdClick()" title="Simulate a user click on an active ad banner">🎯 Simulate Click</button>
                 </div>
             </div>
 
@@ -828,6 +830,35 @@
                         clearInterval(interval);
                     }
                 }, 350);
+            };
+
+            window.simulateAdClick = function () {
+                var activeLinks = document.querySelectorAll('.ad-slot a.ad-link');
+                if (!activeLinks || activeLinks.length === 0) {
+                    addLog('empty', 'INFO', 'No active ad creative available to click. Please click "Refresh Ad Slots" first.');
+                    return;
+                }
+
+                // Randomly select one of the rendered creative banners
+                var link = activeLinks[Math.floor(Math.random() * activeLinks.length)];
+                var creativeId = link.getAttribute('data-creative-id') || '1';
+                var href = link.getAttribute('href');
+
+                // Send background GET request to /track/click so it records in DB and Redis
+                if (href) {
+                    fetch(href, { method: 'GET', redirect: 'follow' })
+                        .catch(function () {});
+                }
+
+                // Increment click counter and persist
+                stats.clicks++;
+                try {
+                    localStorage.setItem('miniad_clicks', stats.clicks);
+                } catch (err) {}
+                statClk.textContent = stats.clicks;
+
+                var activeIP = (window.MiniAdTag && window.MiniAdTag.simulatedIP) ? window.MiniAdTag.simulatedIP : 'Auto (Real IP)';
+                addLog('click', 'CLICK', 'Simulated user click on creative #' + creativeId + ' [IP: ' + activeIP + '] &rarr; tracked via ' + href);
             };
 
             // Global functions for toolbar buttons

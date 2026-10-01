@@ -44,6 +44,26 @@ func (m *mockCampaignRepo) UpdateStatus(ctx context.Context, id int64, status st
 	return camp, nil
 }
 
+func (m *mockCampaignRepo) Update(ctx context.Context, id int64, name string, dailyLimit int, status string) (*model.Campaign, error) {
+	camp, ok := m.campaigns[id]
+	if !ok {
+		return nil, ErrCampaignNotFound
+	}
+	camp.Name = name
+	camp.DailyImpressionLimit = dailyLimit
+	camp.Status = status
+	camp.UpdatedAt = time.Now()
+	return camp, nil
+}
+
+func (m *mockCampaignRepo) Delete(ctx context.Context, id int64) error {
+	if _, ok := m.campaigns[id]; !ok {
+		return ErrCampaignNotFound
+	}
+	delete(m.campaigns, id)
+	return nil
+}
+
 func (m *mockCampaignRepo) GetByID(ctx context.Context, id int64) (*model.Campaign, error) {
 	camp, ok := m.campaigns[id]
 	if !ok {
@@ -117,5 +137,70 @@ func TestCampaignService_UpdateStatus(t *testing.T) {
 	_, err = svc.UpdateStatus(context.Background(), camp.ID, "invalid_status")
 	if err != ErrInvalidStatus {
 		t.Errorf("expected ErrInvalidStatus, got %v", err)
+	}
+}
+
+func TestCampaignService_UpdateCampaign(t *testing.T) {
+	repo := newMockCampaignRepo()
+	svc := NewCampaignService(repo)
+
+	camp, _ := svc.CreateCampaign(context.Background(), "Original Name", 5000, "active")
+
+	// 1. Success update
+	updated, err := svc.UpdateCampaign(context.Background(), camp.ID, "New Name", 10000, "paused")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if updated.Name != "New Name" || updated.DailyImpressionLimit != 10000 || updated.Status != "paused" {
+		t.Errorf("unexpected updated campaign: %+v", updated)
+	}
+
+	// 2. Empty name validation
+	_, err = svc.UpdateCampaign(context.Background(), camp.ID, "   ", 10000, "active")
+	if err != ErrInvalidName {
+		t.Errorf("expected ErrInvalidName, got %v", err)
+	}
+
+	// 3. Non-positive limit validation
+	_, err = svc.UpdateCampaign(context.Background(), camp.ID, "Valid Name", 0, "active")
+	if err != ErrInvalidLimit {
+		t.Errorf("expected ErrInvalidLimit, got %v", err)
+	}
+
+	// 4. Invalid status validation
+	_, err = svc.UpdateCampaign(context.Background(), camp.ID, "Valid Name", 5000, "bad_status")
+	if err != ErrInvalidStatus {
+		t.Errorf("expected ErrInvalidStatus, got %v", err)
+	}
+
+	// 5. Non-existent campaign
+	_, err = svc.UpdateCampaign(context.Background(), 999, "Valid Name", 5000, "active")
+	if err != ErrCampaignNotFound {
+		t.Errorf("expected ErrCampaignNotFound, got %v", err)
+	}
+}
+
+func TestCampaignService_DeleteCampaign(t *testing.T) {
+	repo := newMockCampaignRepo()
+	svc := NewCampaignService(repo)
+
+	camp, _ := svc.CreateCampaign(context.Background(), "To Be Deleted", 5000, "active")
+
+	// 1. Success delete
+	err := svc.DeleteCampaign(context.Background(), camp.ID)
+	if err != nil {
+		t.Fatalf("expected no error deleting, got %v", err)
+	}
+
+	// 2. Delete already deleted (not found)
+	err = svc.DeleteCampaign(context.Background(), camp.ID)
+	if err != ErrCampaignNotFound {
+		t.Errorf("expected ErrCampaignNotFound, got %v", err)
+	}
+
+	// 3. Invalid ID
+	err = svc.DeleteCampaign(context.Background(), 0)
+	if err == nil {
+		t.Errorf("expected error for invalid ID 0")
 	}
 }

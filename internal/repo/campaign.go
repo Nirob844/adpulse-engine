@@ -71,6 +71,45 @@ func (r *CampaignRepo) UpdateStatus(ctx context.Context, id int64, status string
 	return camp, nil
 }
 
+// Update updates all editable fields of a campaign (name, daily_impression_limit, status).
+func (r *CampaignRepo) Update(ctx context.Context, id int64, name string, dailyLimit int, status string) (*model.Campaign, error) {
+	query := `
+		UPDATE campaigns
+		SET name = $1, daily_impression_limit = $2, status = $3, updated_at = NOW()
+		WHERE id = $4
+		RETURNING id, name, status, daily_impression_limit, created_at, updated_at
+	`
+	camp := &model.Campaign{}
+	err := r.pool.QueryRow(ctx, query, name, dailyLimit, status, id).Scan(
+		&camp.ID,
+		&camp.Name,
+		&camp.Status,
+		&camp.DailyImpressionLimit,
+		&camp.CreatedAt,
+		&camp.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to update campaign: %w", err)
+	}
+	return camp, nil
+}
+
+// Delete removes a campaign by ID. Cascades to associated creatives and ad_events via DB foreign keys.
+func (r *CampaignRepo) Delete(ctx context.Context, id int64) error {
+	query := `DELETE FROM campaigns WHERE id = $1`
+	cmdTag, err := r.pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete campaign: %w", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // GetByID retrieves a campaign by its primary key ID.
 func (r *CampaignRepo) GetByID(ctx context.Context, id int64) (*model.Campaign, error) {
 	query := `

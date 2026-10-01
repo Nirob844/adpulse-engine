@@ -184,3 +184,47 @@ func (r *CreativeRepo) GetActiveCandidates(ctx context.Context, width, height in
 	}
 	return candidates, rows.Err()
 }
+
+// Update modifies an existing creative by its ID.
+func (r *CreativeRepo) Update(ctx context.Context, id, campaignID int64, width, height int, imageURL, clickURL string) (*model.Creative, error) {
+	query := `
+		UPDATE creatives
+		SET campaign_id = $2, width = $3, height = $4, image_url = $5, click_url = $6
+		WHERE id = $1
+		RETURNING id, campaign_id, width, height, image_url, click_url, created_at
+	`
+	cr := &model.Creative{}
+	err := r.pool.QueryRow(ctx, query, id, campaignID, width, height, imageURL, clickURL).Scan(
+		&cr.ID,
+		&cr.CampaignID,
+		&cr.Width,
+		&cr.Height,
+		&cr.ImageURL,
+		&cr.ClickURL,
+		&cr.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return nil, ErrForeignKeyViolation
+		}
+		return nil, fmt.Errorf("failed to update creative: %w", err)
+	}
+	return cr, nil
+}
+
+// Delete removes a creative by its ID.
+func (r *CreativeRepo) Delete(ctx context.Context, id int64) error {
+	query := `DELETE FROM creatives WHERE id = $1`
+	ct, err := r.pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete creative: %w", err)
+	}
+	if ct.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}

@@ -28,6 +28,8 @@ type CreativeRepository interface {
 	ListAll(ctx context.Context) ([]*model.Creative, error)
 	ListByCampaignID(ctx context.Context, campaignID int64) ([]*model.Creative, error)
 	GetActiveCandidates(ctx context.Context, width, height int) ([]*model.CreativeCandidate, error)
+	Update(ctx context.Context, id, campaignID int64, width, height int, imageURL, clickURL string) (*model.Creative, error)
+	Delete(ctx context.Context, id int64) error
 }
 
 // CreativeService coordinates creative business logic.
@@ -117,6 +119,71 @@ func (s *CreativeService) GetActiveCandidates(ctx context.Context, width, height
 		return nil, errors.New("dimensions must be positive")
 	}
 	return s.creativeRepo.GetActiveCandidates(ctx, width, height)
+}
+
+// UpdateCreative validates business rules and updates an existing creative.
+func (s *CreativeService) UpdateCreative(ctx context.Context, id int64, req model.CreateCreativeRequest) (*model.Creative, error) {
+	if id <= 0 {
+		return nil, ErrInvalidCreativeID
+	}
+	if req.CampaignID <= 0 {
+		return nil, ErrInvalidCampaignID
+	}
+	if req.Width <= 0 {
+		return nil, ErrInvalidWidth
+	}
+	if req.Height <= 0 {
+		return nil, ErrInvalidHeight
+	}
+
+	imageURL := strings.TrimSpace(req.ImageURL)
+	if err := validateURL(imageURL); err != nil {
+		return nil, ErrInvalidImageURL
+	}
+
+	clickURL := strings.TrimSpace(req.ClickURL)
+	if err := validateURL(clickURL); err != nil {
+		return nil, ErrInvalidClickURL
+	}
+
+	// Verify campaign exists
+	if s.campaignRepo != nil {
+		_, err := s.campaignRepo.GetByID(ctx, req.CampaignID)
+		if err != nil {
+			if errors.Is(err, repo.ErrNotFound) {
+				return nil, ErrCampaignNotFound
+			}
+			return nil, err
+		}
+	}
+
+	cr, err := s.creativeRepo.Update(ctx, id, req.CampaignID, req.Width, req.Height, imageURL, clickURL)
+	if err != nil {
+		if errors.Is(err, repo.ErrNotFound) {
+			return nil, ErrCreativeNotFound
+		}
+		if errors.Is(err, repo.ErrForeignKeyViolation) {
+			return nil, ErrCampaignNotFound
+		}
+		return nil, err
+	}
+	return cr, nil
+}
+
+// DeleteCreative removes a creative by ID.
+func (s *CreativeService) DeleteCreative(ctx context.Context, id int64) error {
+	if id <= 0 {
+		return ErrInvalidCreativeID
+	}
+
+	err := s.creativeRepo.Delete(ctx, id)
+	if err != nil {
+		if errors.Is(err, repo.ErrNotFound) {
+			return ErrCreativeNotFound
+		}
+		return err
+	}
+	return nil
 }
 
 // validateURL checks if a string is a valid absolute HTTP or HTTPS URL.

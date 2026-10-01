@@ -62,4 +62,61 @@ func TestRouterHealthAndCORS(t *testing.T) {
 	if !strings.Contains(bodyTag, "MiniAdTag") {
 		t.Errorf("expected adtag.js to define MiniAdTag")
 	}
+
+	// 6. Test /admin dashboard serving
+	reqAdmin := httptest.NewRequest(http.MethodGet, "/admin", nil)
+	wAdmin := httptest.NewRecorder()
+	r.ServeHTTP(wAdmin, reqAdmin)
+
+	if wAdmin.Code != http.StatusOK {
+		t.Errorf("expected 200 OK for /admin, got %d", wAdmin.Code)
+	}
+	bodyAdmin := wAdmin.Body.String()
+	if !strings.Contains(bodyAdmin, "Operations & Admin Console") && !strings.Contains(bodyAdmin, "Mini Ad Server") {
+		t.Errorf("expected admin.html content in /admin response")
+	}
+
+	// 7. Verify DELETE /campaigns/{id} is registered (not 405 Method Not Allowed)
+	reqDelete := httptest.NewRequest(http.MethodDelete, "/campaigns/not-an-id", nil)
+	wDelete := httptest.NewRecorder()
+	r.ServeHTTP(wDelete, reqDelete)
+	if wDelete.Code == http.StatusMethodNotAllowed {
+		t.Errorf("expected DELETE /campaigns/{id} to be allowed, got 405 Method Not Allowed")
+	}
+	if wDelete.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 Bad Request for invalid id, got %d", wDelete.Code)
+	}
+
+	// 8. Verify PUT /campaigns/{id} is registered (not 405 Method Not Allowed)
+	reqPut := httptest.NewRequest(http.MethodPut, "/campaigns/not-an-id", nil)
+	wPut := httptest.NewRecorder()
+	r.ServeHTTP(wPut, reqPut)
+	if wPut.Code == http.StatusMethodNotAllowed {
+		t.Errorf("expected PUT /campaigns/{id} to be allowed, got 405 Method Not Allowed")
+	}
+	if wPut.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 Bad Request for invalid id, got %d", wPut.Code)
+	}
+
+	// 9. Verify DELETE /creatives/{id} is registered (not 405 Method Not Allowed)
+	reqDeleteCreative := httptest.NewRequest(http.MethodDelete, "/creatives/not-an-id", nil)
+	wDeleteCreative := httptest.NewRecorder()
+	r.ServeHTTP(wDeleteCreative, reqDeleteCreative)
+	if wDeleteCreative.Code == http.StatusMethodNotAllowed {
+		t.Errorf("expected DELETE /creatives/{id} to be allowed, got 405 Method Not Allowed")
+	}
+	if wDeleteCreative.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 Bad Request for invalid id, got %d", wDeleteCreative.Code)
+	}
+
+	// 10. Verify PUT /creatives/{id} is registered (not 405 Method Not Allowed)
+	reqPutCreative := httptest.NewRequest(http.MethodPut, "/creatives/not-an-id", nil)
+	wPutCreative := httptest.NewRecorder()
+	r.ServeHTTP(wPutCreative, reqPutCreative)
+	if wPutCreative.Code == http.StatusMethodNotAllowed {
+		t.Errorf("expected PUT /creatives/{id} to be allowed, got 405 Method Not Allowed")
+	}
+	if wPutCreative.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 Bad Request for invalid id, got %d", wPutCreative.Code)
+	}
 }

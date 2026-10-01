@@ -109,12 +109,16 @@ func NewRouter(cfg RouterConfig) chi.Router {
 		r.Get("/", campaignHandler.List)
 		r.Get("/{id}", campaignHandler.GetByID)
 		r.Patch("/{id}", campaignHandler.UpdateStatus)
+		r.Put("/{id}", campaignHandler.Update)
+		r.Delete("/{id}", campaignHandler.Delete)
 	})
 
 	r.Route("/creatives", func(r chi.Router) {
 		r.Post("/", creativeHandler.Create)
 		r.Get("/", creativeHandler.List)
 		r.Get("/{id}", creativeHandler.GetByID)
+		r.Put("/{id}", creativeHandler.Update)
+		r.Delete("/{id}", creativeHandler.Delete)
 	})
 
 	// 5. Documentation endpoint
@@ -126,6 +130,10 @@ func NewRouter(cfg RouterConfig) chi.Router {
 
 	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(webDir, "docs.html"))
+	})
+
+	r.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "admin.html"))
 	})
 
 	// 6. Static files (index.html, publisher.html, openapi.yaml, etc.)

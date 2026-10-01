@@ -182,7 +182,21 @@ Interactive Swagger / OpenAPI documentation is hosted at `http://localhost:8000/
 | `GET` | `/creatives` | Lists creatives (supports filtering by `?campaign_id=`) |
 | `GET` | `/creatives/:id` | Fetches a single creative by ID |
 | `GET` | `/publisher.html` | Demo publisher page rendering live ads |
+| `GET` | `/admin` | Interactive Admin Dashboard for campaign & creative management |
 | `GET` | `/docs` | Interactive OpenAPI / Scalar documentation |
+
+---
+
+## Admin Operations Dashboard
+
+Navigate to `http://localhost:8000/admin` in your browser.
+
+The single-page Admin Dashboard provides complete management control and operational observability:
+- **KPI Metrics Cards**: Live delivery totals (Total Impressions, Total Clicks, Network CTR %, Active Campaigns).
+- **Campaign Management**: Real-time status toggling (Pause / Resume with 1 click via `PATCH /campaigns/:id`), daily limits, and modal dialog to create new campaigns (`POST /campaigns`).
+- **Visual Creatives Gallery**: Direct SVG image thumbnail previews, dimension tags, landing page destinations, and modal dialog to add new creative assets (`POST /creatives`).
+- **Analytics & CTR Reporting**: Interactive date range picker and Campaign vs Day aggregation with visual CTR progress bars.
+- **System Health Monitor**: Live background polling for PostgreSQL and Redis connectivity status.
 
 ---
 

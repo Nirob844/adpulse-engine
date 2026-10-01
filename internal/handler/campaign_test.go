@@ -45,6 +45,8 @@ func setupTestRouter(t *testing.T) (chi.Router, *repo.CampaignRepo) {
 	r.Post("/campaigns", campaignHandler.Create)
 	r.Patch("/campaigns/{id}", campaignHandler.UpdateStatus)
 	r.Get("/campaigns", campaignHandler.List)
+	r.Put("/campaigns/{id}", campaignHandler.Update)
+	r.Delete("/campaigns/{id}", campaignHandler.Delete)
 
 	return r, campaignRepo
 }
@@ -255,5 +257,126 @@ func TestStructuredErrorFormat(t *testing.T) {
 
 	if errResp.Status != 400 || errResp.Code == "" || errResp.Error == "" {
 		t.Errorf("expected populated ErrorResponse, got %+v", errResp)
+	}
+}
+
+func TestUpdateCampaign(t *testing.T) {
+	r, repo := setupTestRouter(t)
+	if r == nil {
+		return
+	}
+
+	camp, err := repo.Create(context.Background(), "Original Campaign", 500, "active")
+	if err != nil {
+		t.Fatalf("failed to create campaign: %v", err)
+	}
+
+	// 1. Successful PUT full update
+	updateBody := `{"name":"Updated Campaign","daily_impression_limit":2000,"status":"paused"}`
+	req := httptest.NewRequest(http.MethodPut, "/campaigns/"+strconv.FormatInt(camp.ID, 10), bytes.NewBufferString(updateBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var updated model.Campaign
+	if err := json.NewDecoder(w.Body).Decode(&updated); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if updated.Name != "Updated Campaign" {
+		t.Errorf("expected name 'Updated Campaign', got '%s'", updated.Name)
+	}
+	if updated.DailyImpressionLimit != 2000 {
+		t.Errorf("expected limit 2000, got %d", updated.DailyImpressionLimit)
+	}
+	if updated.Status != "paused" {
+		t.Errorf("expected status 'paused', got '%s'", updated.Status)
+	}
+
+	// 2. Validation error - missing or blank name
+	req = httptest.NewRequest(http.MethodPut, "/campaigns/"+strconv.FormatInt(camp.ID, 10), bytes.NewBufferString(`{"name":"","daily_impression_limit":2000,"status":"active"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for empty name, got %d", w.Code)
+	}
+
+	// 3. Validation error - invalid limit
+	req = httptest.NewRequest(http.MethodPut, "/campaigns/"+strconv.FormatInt(camp.ID, 10), bytes.NewBufferString(`{"name":"Valid","daily_impression_limit":-10,"status":"active"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for negative limit, got %d", w.Code)
+	}
+
+	// 4. Validation error - invalid status
+	req = httptest.NewRequest(http.MethodPut, "/campaigns/"+strconv.FormatInt(camp.ID, 10), bytes.NewBufferString(`{"name":"Valid","daily_impression_limit":100,"status":"deleted"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for invalid status, got %d", w.Code)
+	}
+
+	// 5. Not found - 404
+	req = httptest.NewRequest(http.MethodPut, "/campaigns/9999999", bytes.NewBufferString(`{"name":"Valid","daily_impression_limit":100,"status":"active"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected 404 for unknown campaign, got %d", w.Code)
+	}
+
+	// 6. Bad ID parameter
+	req = httptest.NewRequest(http.MethodPut, "/campaigns/abc", bytes.NewBufferString(`{"name":"Valid","daily_impression_limit":100,"status":"active"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for non-integer id, got %d", w.Code)
+	}
+}
+
+func TestDeleteCampaign(t *testing.T) {
+	r, repo := setupTestRouter(t)
+	if r == nil {
+		return
+	}
+
+	camp, err := repo.Create(context.Background(), "To Be Deleted", 100, "active")
+	if err != nil {
+		t.Fatalf("failed to create campaign: %v", err)
+	}
+
+	// 1. Successful DELETE -> 204 No Content
+	req := httptest.NewRequest(http.MethodDelete, "/campaigns/"+strconv.FormatInt(camp.ID, 10), nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected 204 No Content, got %d: %s", w.Code, w.Body.String())
+	}
+
+	// 2. Second DELETE on same ID should return 404 Not Found
+	req = httptest.NewRequest(http.MethodDelete, "/campaigns/"+strconv.FormatInt(camp.ID, 10), nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected 404 after deletion, got %d", w.Code)
+	}
+
+	// 3. Bad ID parameter
+	req = httptest.NewRequest(http.MethodDelete, "/campaigns/xyz", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for non-integer id, got %d", w.Code)
 	}
 }

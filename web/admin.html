@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Ad Server — Admin Control Center</title>
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-surface: #111827;
+            --bg-card: #1f2937;
+            --border-color: #374151;
+            --border-subtle: #1f2937;
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.12);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.12);
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.12);
+            --info: #06b6d4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding-bottom: 60px;
+        }
+
+        /* Navigation Header */
+        header {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            backdrop-filter: blur(8px);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.1rem;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .brand-text {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-subtitle {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+            margin-top: -2px;
+        }
+
+        .nav-center {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .health-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success);
+            box-shadow: 0 0 6px var(--success);
+        }
+
+        .status-dot.error {
+            background-color: var(--danger);
+            box-shadow: 0 0 6px var(--danger);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Buttons & Forms */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 7px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+
+        .btn:hover {
+            background-color: #374151;
+            border-color: #4b5563;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background-color: #059669;
+            border-color: #059669;
+            color: #ffffff;
+        }
+
+        .btn-success:hover {
+            background-color: #047857;
+        }
+
+        .btn-warning {
+            background-color: #d97706;
+            border-color: #d97706;
+            color: #ffffff;
+        }
+
+        .btn-warning:hover {
+            background-color: #b45309;
+        }
+
+        .btn-danger {
+            background-color: #dc2626;
+            border-color: #dc2626;
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+
+        .btn-sm {
+            padding: 4px 9px;
+            font-size: 0.74rem;
+            border-radius: 4px;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 28px auto 0;
+            padding: 0 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .kpi-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary);
+        }
+
+        .kpi-card.success::before { background-color: var(--success); }
+        .kpi-card.warning::before { background-color: var(--warning); }
+        .kpi-card.info::before { background-color: var(--info); }
+
+        .kpi-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-secondary);
+            letter-spacing: 0.6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kpi-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin: 12px 0 4px;
+            color: #ffffff;
+        }
+
+        .kpi-meta {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+
+        /* Section Cards */
+        .section-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .section-title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .badge-count {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .section-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: rgba(31, 41, 55, 0.5);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.6px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.active {
+            background-color: var(--success-bg);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-badge.paused {
+            background-color: var(--warning-bg);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* CTR Bar */
+        .ctr-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 120px;
+        }
+
+        .ctr-bar-bg {
+            flex: 1;
+            height: 6px;
+            background-color: var(--bg-card);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .ctr-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #ec4899);
+            border-radius: 3px;
+        }
+
+        .ctr-text {
+            font-weight: 700;
+            font-size: 0.8rem;
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* Creatives Grid */
+        .creatives-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            padding: 24px;
+        }
+
+        .creative-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+
+        .creative-card:hover {
+            transform: translateY(-2px);
+            border-color: #4b5563;
+        }
+
+        .creative-preview {
+            background-color: #0b0f19;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 140px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .creative-preview img {
+            max-width: 100%;
+            max-height: 110px;
+            object-fit: contain;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .dimension-pill {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: rgba(17, 24, 39, 0.85);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .creative-body {
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+
+        .creative-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .creative-url {
+            color: #60a5fa;
+            text-decoration: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 260px;
+            display: inline-block;
+        }
+
+        .creative-url:hover {
+            text-decoration: underline;
+        }
+
+        /* Filter Controls */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            background-color: rgba(31, 41, 55, 0.3);
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .form-control {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+        }
+
+        label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* Modal Dialog */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .modal-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+        }
+
+        .modal-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border-color);
+            background-color: rgba(31, 41, 55, 0.4);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 200;
+        }
+
+        .toast {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+            font-size: 0.85rem;
+            animation: slideIn 0.25s ease-out;
+            min-width: 280px;
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.info { border-left: 4px solid var(--primary); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-container { flex-direction: column; align-items: flex-start; }
+            .kpi-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <div class="brand">
+                <div class="brand-icon">⚡</div>
+                <div>
+                    <div class="brand-text">Mini Ad Server</div>
+                    <div class="brand-subtitle">Operations &amp; Admin Console</div>
+                </div>
+            </div>
+
+            <div class="nav-center">
+                <div class="health-pill" id="health-pg">
+                    <span class="status-dot" id="dot-pg"></span>
+                    <span>PostgreSQL: <strong id="val-pg">checking...</strong></span>
+                </div>
+                <div class="health-pill" id="health-redis">
+                    <span class="status-dot" id="dot-redis"></span>
+                    <span>Redis: <strong id="val-redis">checking...</strong></span>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <button class="btn btn-sm" onclick="loadAllData()" title="Refresh Dashboard Data">🔄 Refresh</button>
+                <a href="/publisher.html" target="_blank" class="btn btn-sm">🌐 Demo Publisher</a>
+                <a href="/docs" target="_blank" class="btn btn-sm">📄 API Docs</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+
+        <!-- Top KPI Cards -->
+        <section class="kpi-grid">
+            <div class="kpi-card success">
+                <div class="kpi-title">
+                    <span>Total Impressions</span>
+                    <span>👁️</span>
+                </div>
+                <div class="kpi-value" id="kpi-impressions">0</div>
+                <div class="kpi-meta">Live delivery across all campaigns</div>
+            </div>
+
+            <div class="kpi-card info">
+                <div class="kpi-title">
+                    <span>Total Clicks</span>
+                    <span>🖱️</span>
+                </div>
+                <div class="kpi-value" id="kpi-clicks">0</div>
+                <div class="kpi-meta">Verified user interactions &amp; redirects</div>
+            </div>
+
+            <div class="kpi-card warning">
+                <div class="kpi-title">
+                    <span>Network CTR</span>
+                    <span>📈</span>
+                </div>
+                <div class="kpi-value" id="kpi-ctr">0.00%</div>
+                <div class="kpi-meta">Click-through rate (Clicks / Impressions)</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-title">
+                    <span>Active Campaigns</span>
+                    <span>🎯</span>
+                </div>
+                <div class="kpi-value" id="kpi-campaigns">0 / 0</div>
+                <div class="kpi-meta" id="kpi-campaigns-meta">Inventory ready for ad serving</div>
+            </div>
+        </section>
+
+        <!-- Section 1: Campaign Management -->
+        <section class="section-card">
+            <div class="section-header">
+                <div class="section-title-group">
+                    <h2 class="section-title">Campaigns Management</h2>
+                    <span class="badge-count" id="count-campaigns">0</span>
+                </div>
+                <div class="section-actions">
+                    <button class="btn btn-primary btn-sm" onclick="openCreateCampaignModal()">+ Create Campaign</button>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Campaign Name</th>
+                            <th>Status</th>
+                            <th>Daily Impression Quota</th>
+                            <th>Creatives</th>
+                            <th>Created Date</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="campaigns-tbody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Loading campaigns...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 2: Creatives Gallery -->
+        <section class="section-card">
+            <div class="section-header">
+                <div class="section-title-group">
+                    <h2 class="section-title">Creative Inventory Gallery</h2>
+                    <span class="badge-count" id="count-creatives">0</span>
+                </div>
+                <div class="section-actions">
+                    <select id="filter-creative-campaign" class="form-control" style="font-size: 0.78rem; padding: 4px 8px;" onchange="renderCreatives()">
+                        <option value="">All Campaigns</option>
+                    </select>
+                    <button class="btn btn-primary btn-sm" onclick="openCreateCreativeModal()">+ Add Creative</button>
+                </div>
+            </div>
+
+            <div class="creatives-grid" id="creatives-container">
+                <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px;">
+                    Loading creative assets...
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Performance & Reports -->
+        <section class="section-card">
+            <div class="section-header">
+                <div class="section-title-group">
+                    <h2 class="section-title">Delivery Performance &amp; CTR Analytics</h2>
+                </div>
+                <div class="section-actions">
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Real-time aggregated metrics</span>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label for="rep-from">From:</label>
+                    <input type="date" id="rep-from" class="form-control">
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label for="rep-to">To:</label>
+                    <input type="date" id="rep-to" class="form-control">
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label for="rep-group">Group By:</label>
+                    <select id="rep-group" class="form-control">
+                        <option value="campaign">Campaign</option>
+                        <option value="day">Day</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="fetchReport()">Generate Report</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr id="report-thead">
+                            <th>Campaign</th>
+                            <th>Impressions</th>
+                            <th>Clicks</th>
+                            <th>CTR Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-tbody">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">Select dates and click "Generate Report"</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: Create Campaign -->
+    <div class="modal-overlay" id="modal-create-campaign">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Create New Campaign</h3>
+                <button class="modal-close" onclick="closeModal('modal-create-campaign')">&times;</button>
+            </div>
+            <form id="form-create-campaign" onsubmit="handleCreateCampaign(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="camp-name">Campaign Name *</label>
+                        <input type="text" id="camp-name" class="form-control" placeholder="e.g. Autumn Super Sale 2026" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="camp-limit">Daily Impression Quota *</label>
+                        <input type="number" id="camp-limit" class="form-control" placeholder="e.g. 10000" min="1" value="10000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="camp-status">Initial Status</label>
+                        <select id="camp-status" class="form-control">
+                            <option value="active" selected>Active</option>
+                            <option value="paused">Paused</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('modal-create-campaign')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Campaign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Campaign -->
+    <div class="modal-overlay" id="modal-edit-campaign">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Campaign</h3>
+                <button class="modal-close" onclick="closeModal('modal-edit-campaign')">&times;</button>
+            </div>
+            <form id="form-edit-campaign" onsubmit="handleUpdateCampaign(event)">
+                <input type="hidden" id="edit-camp-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit-camp-name">Campaign Name *</label>
+                        <input type="text" id="edit-camp-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-camp-limit">Daily Impression Quota *</label>
+                        <input type="number" id="edit-camp-limit" class="form-control" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-camp-status">Status *</label>
+                        <select id="edit-camp-status" class="form-control" required>
+                            <option value="active">Active</option>
+                            <option value="paused">Paused</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('modal-edit-campaign')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Create Creative -->
+    <div class="modal-overlay" id="modal-create-creative">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Creative Asset</h3>
+                <button class="modal-close" onclick="closeModal('modal-create-creative')">&times;</button>
+            </div>
+            <form id="form-create-creative" onsubmit="handleCreateCreative(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="creat-campaign">Assign to Campaign *</label>
+                        <select id="creat-campaign" class="form-control" required>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="creat-size">Banner Dimension (Width &times; Height) *</label>
+                        <select id="creat-size" class="form-control" required onchange="onSizeSelectChange('create')">
+                            <option value="728x90" selected>728 &times; 90 px (Leaderboard - Header/Footer)</option>
+                            <option value="300x250">300 &times; 250 px (Medium Rectangle - Sidebar/Inline)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="creat-image-url">Image URL *</label>
+                        <input type="text" id="creat-image-url" class="form-control" placeholder="http://localhost:8000/assets/creative_techbrand_728x90.svg" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="creat-click-url">Landing Page Click Destination *</label>
+                        <input type="url" id="creat-click-url" class="form-control" placeholder="https://example.com/promo?ref=miniad" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('modal-create-creative')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Creative</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Creative -->
+    <div class="modal-overlay" id="modal-edit-creative">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Creative Asset</h3>
+                <button class="modal-close" onclick="closeModal('modal-edit-creative')">&times;</button>
+            </div>
+            <form id="form-edit-creative" onsubmit="handleUpdateCreative(event)">
+                <input type="hidden" id="edit-creat-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit-creat-campaign">Assign to Campaign *</label>
+                        <select id="edit-creat-campaign" class="form-control" required>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-creat-size">Banner Dimension (Width &times; Height) *</label>
+                        <select id="edit-creat-size" class="form-control" required onchange="onSizeSelectChange('edit')">
+                            <option value="728x90">728 &times; 90 px (Leaderboard - Header/Footer)</option>
+                            <option value="300x250">300 &times; 250 px (Medium Rectangle - Sidebar/Inline)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-creat-image-url">Image URL *</label>
+                        <input type="text" id="edit-creat-image-url" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-creat-click-url">Landing Page Click Destination *</label>
+                        <input type="url" id="edit-creat-click-url" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('modal-edit-creative')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Client-Side Dashboard Controller Script -->
+    <script>
+        (function () {
+            'use strict';
+
+            var apiBase = (window.location && window.location.port !== '8000') ? 'http://localhost:8000' : '';
+            var state = {
+                campaigns: [],
+                creatives: [],
+                reportData: []
+            };
+
+            // Set default date range for report (past 7 days to today)
+            function initDates() {
+                var today = new Date();
+                var lastWeek = new Date();
+                lastWeek.setDate(today.getDate() - 7);
+
+                var formatDate = function (d) {
+                    var month = '' + (d.getMonth() + 1);
+                    var day = '' + d.getDate();
+                    var year = d.getFullYear();
+                    if (month.length < 2) month = '0' + month;
+                    if (day.length < 2) day = '0' + day;
+                    return [year, month, day].join('-');
+                };
+
+                document.getElementById('rep-from').value = formatDate(lastWeek);
+                document.getElementById('rep-to').value = formatDate(today);
+            }
+
+            // Toast Notifications
+            function showToast(message, type) {
+                type = type || 'info';
+                var container = document.getElementById('toast-container');
+                var toast = document.createElement('div');
+                toast.className = 'toast ' + type;
+                var icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
+                toast.innerHTML = '<span>' + icon + '</span><span>' + message + '</span>';
+                container.appendChild(toast);
+
+                setTimeout(function () {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    toast.style.transition = 'all 0.3s ease';
+                    setTimeout(function () {
+                        if (toast.parentNode) toast.parentNode.removeChild(toast);
+                    }, 300);
+                }, 3500);
+            }
+
+            // Healthcheck Polling
+            function checkHealth() {
+                fetch(apiBase + '/health')
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        var valPg = document.getElementById('val-pg');
+                        var dotPg = document.getElementById('dot-pg');
+                        var valRedis = document.getElementById('val-redis');
+                        var dotRedis = document.getElementById('dot-redis');
+
+                        if (data.database === 'connected') {
+                            valPg.textContent = 'Connected';
+                            dotPg.className = 'status-dot';
+                        } else {
+                            valPg.textContent = 'Disconnected';
+                            dotPg.className = 'status-dot error';
+                        }
+
+                        if (data.redis === 'connected') {
+                            valRedis.textContent = 'Connected';
+                            dotRedis.className = 'status-dot';
+                        } else {
+                            valRedis.textContent = 'Degraded';
+                            dotRedis.className = 'status-dot error';
+                        }
+                    })
+                    .catch(function () {
+                        document.getElementById('val-pg').textContent = 'Offline';
+                        document.getElementById('dot-pg').className = 'status-dot error';
+                        document.getElementById('val-redis').textContent = 'Offline';
+                        document.getElementById('dot-redis').className = 'status-dot error';
+                    });
+            }
+
+            // Load Campaigns
+            function fetchCampaigns() {
+                return fetch(apiBase + '/campaigns')
+                    .then(function (res) {
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        return res.json();
+                    })
+                    .then(function (data) {
+                        state.campaigns = data || [];
+                        renderCampaigns();
+                        updateCampaignDropdowns();
+                        return state.campaigns;
+                    })
+                    .catch(function (err) {
+                        console.error('Error fetching campaigns:', err);
+                        showToast('Failed to load campaigns: ' + err.message, 'error');
+                    });
+            }
+
+            // Render Campaigns Table
+            function renderCampaigns() {
+                var tbody = document.getElementById('campaigns-tbody');
+                var countBadge = document.getElementById('count-campaigns');
+                countBadge.textContent = state.campaigns.length;
+
+                var activeCount = 0;
+
+                if (state.campaigns.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">No campaigns found. Click "+ Create Campaign" to get started.</td></tr>';
+                    return;
+                }
+
+                var html = '';
+                state.campaigns.forEach(function (c) {
+                    if (c.status === 'active') activeCount++;
+                    var dateStr = c.created_at ? new Date(c.created_at).toLocaleDateString() : 'N/A';
+                    var statusClass = c.status === 'active' ? 'active' : 'paused';
+                    var toggleBtn = c.status === 'active'
+                        ? '<button class="btn btn-warning btn-sm" onclick="toggleCampaignStatus(' + c.id + ', \'paused\')" title="Pause Campaign">⏸️</button>'
+                        : '<button class="btn btn-success btn-sm" onclick="toggleCampaignStatus(' + c.id + ', \'active\')" title="Resume Campaign">▶️</button>';
+                    var editBtn = '<button class="btn btn-sm" onclick="openEditCampaignModal(' + c.id + ')" title="Edit Campaign Details">✏️ Edit</button>';
+                    var deleteBtn = '<button class="btn btn-danger btn-sm" onclick="deleteCampaign(' + c.id + ', \'' + escapeHtml(c.name).replace(/'/g, "\\'") + '\')" title="Delete Campaign">🗑️</button>';
+
+                    var actionGroup = '<div style="display: flex; gap: 6px; justify-content: flex-end;">' + toggleBtn + editBtn + deleteBtn + '</div>';
+
+                    html += '<tr>' +
+                        '<td><code>#' + c.id + '</code></td>' +
+                        '<td><strong>' + escapeHtml(c.name) + '</strong></td>' +
+                        '<td><span class="status-badge ' + statusClass + '">' + c.status + '</span></td>' +
+                        '<td>' + (c.daily_impression_limit ? c.daily_impression_limit.toLocaleString() : 'Unlimited') + ' / day</td>' +
+                        '<td><span class="badge-count">' + (c.creative_count || 0) + ' banners</span></td>' +
+                        '<td style="color: var(--text-muted);">' + dateStr + '</td>' +
+                        '<td style="text-align: right;">' + actionGroup + '</td>' +
+                        '</tr>';
+                });
+
+                tbody.innerHTML = html;
+
+                // Update Campaign KPI
+                document.getElementById('kpi-campaigns').textContent = activeCount + ' / ' + state.campaigns.length;
+                document.getElementById('kpi-campaigns-meta').textContent = activeCount + ' active, ' + (state.campaigns.length - activeCount) + ' paused';
+            }
+
+            // Toggle Campaign Status
+            window.toggleCampaignStatus = function (id, newStatus) {
+                fetch(apiBase + '/campaigns/' + id, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                })
+                .then(function (updated) {
+                    showToast('Campaign #' + id + ' status changed to ' + newStatus, 'success');
+                    fetchCampaigns();
+                })
+                .catch(function (err) {
+                    showToast('Failed to update status: ' + err.message, 'error');
+                });
+            };
+
+            // Edit Campaign Modal & Handler
+            window.openEditCampaignModal = function (id) {
+                var camp = state.campaigns.find(function (c) { return c.id === id; });
+                if (!camp) return;
+
+                document.getElementById('edit-camp-id').value = camp.id;
+                document.getElementById('edit-camp-name').value = camp.name;
+                document.getElementById('edit-camp-limit').value = camp.daily_impression_limit;
+                document.getElementById('edit-camp-status').value = camp.status;
+                document.getElementById('modal-edit-campaign').classList.add('active');
+            };
+
+            window.handleUpdateCampaign = function (e) {
+                e.preventDefault();
+                var id = document.getElementById('edit-camp-id').value;
+                var name = document.getElementById('edit-camp-name').value.trim();
+                var limit = parseInt(document.getElementById('edit-camp-limit').value, 10);
+                var status = document.getElementById('edit-camp-status').value;
+
+                fetch(apiBase + '/campaigns/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        daily_impression_limit: limit,
+                        status: status
+                    })
+                })
+                .then(function (res) {
+                    if (!res.ok) {
+                        return res.json().then(function (err) {
+                            throw new Error(err.error || ('HTTP ' + res.status));
+                        });
+                    }
+                    return res.json();
+                })
+                .then(function (updated) {
+                    closeModal('modal-edit-campaign');
+                    showToast('Campaign #' + id + ' updated successfully!', 'success');
+                    loadAllData();
+                })
+                .catch(function (err) {
+                    showToast('Failed to update campaign: ' + err.message, 'error');
+                });
+            };
+
+            // Delete Campaign Handler
+            window.deleteCampaign = function (id, name) {
+                if (!confirm('Are you sure you want to delete campaign #' + id + ' ("' + name + '")?\n\nThis will permanently delete the campaign and all associated creatives and event records.')) {
+                    return;
+                }
+
+                fetch(apiBase + '/campaigns/' + id, {
+                    method: 'DELETE'
+                })
+                .then(function (res) {
+                    if (res.status !== 204 && !res.ok) {
+                        return res.json().then(function (err) {
+                            throw new Error(err.error || ('HTTP ' + res.status));
+                        });
+                    }
+                    showToast('Campaign #' + id + ' deleted successfully!', 'success');
+                    loadAllData();
+                })
+                .catch(function (err) {
+                    showToast('Failed to delete campaign: ' + err.message, 'error');
+                });
+            };
+
+            // Load Creatives
+            function fetchCreatives() {
+                return fetch(apiBase + '/creatives')
+                    .then(function (res) {
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        return res.json();
+                    })
+                    .then(function (data) {
+                        state.creatives = data || [];
+                        renderCreatives();
+                        return state.creatives;
+                    })
+                    .catch(function (err) {
+                        console.error('Error fetching creatives:', err);
+                        showToast('Failed to load creatives: ' + err.message, 'error');
+                    });
+            }
+
+            // Render Creatives Gallery
+            window.renderCreatives = function () {
+                var container = document.getElementById('creatives-container');
+                var countBadge = document.getElementById('count-creatives');
+                var filterCampaignId = document.getElementById('filter-creative-campaign').value;
+
+                var filtered = state.creatives;
+                if (filterCampaignId) {
+                    filtered = state.creatives.filter(function (c) {
+                        return '' + c.campaign_id === filterCampaignId;
+                    });
+                }
+
+                countBadge.textContent = filtered.length;
+
+                if (filtered.length === 0) {
+                    container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px;">No creative assets found for selected filter.</div>';
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function (c) {
+                    var campName = 'Campaign #' + c.campaign_id;
+                    var found = state.campaigns.find(function (camp) { return camp.id === c.campaign_id; });
+                    if (found) campName = found.name;
+
+                    var imgSrc = c.image_url;
+                    if (apiBase && imgSrc.indexOf('http') !== 0) {
+                        imgSrc = apiBase + imgSrc;
+                    }
+
+                    html += '<div class="creative-card">' +
+                        '<div class="creative-preview">' +
+                            '<span class="dimension-pill">' + c.width + ' &times; ' + c.height + '</span>' +
+                            '<img src="' + escapeHtml(imgSrc) + '" alt="Creative #' + c.id + '" loading="lazy" onerror="this.onerror=null;this.src=\'' + apiBase + '/assets/creative_' + c.width + 'x' + c.height + '.svg\';">' +
+                        '</div>' +
+                        '<div class="creative-body">' +
+                            '<div class="creative-meta-row">' +
+                                '<strong style="color: #ffffff;">#' + c.id + ' ' + escapeHtml(campName) + '</strong>' +
+                                '<span class="status-badge active" style="font-size: 0.65rem;">' + c.width + 'x' + c.height + '</span>' +
+                            '</div>' +
+                            '<div style="font-size: 0.75rem; color: var(--text-muted); display:flex; align-items:center; gap:4px;">' +
+                                '<span>Target:</span> ' +
+                                '<a href="' + escapeHtml(c.click_url) + '" target="_blank" class="creative-url" title="' + escapeHtml(c.click_url) + '">' + escapeHtml(c.click_url) + '</a>' +
+                            '</div>' +
+                            '<div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--border-color);">' +
+                                '<button class="btn btn-sm" onclick="openEditCreativeModal(' + c.id + ')" title="Edit Creative">✏️ Edit</button>' +
+                                '<button class="btn btn-danger btn-sm" onclick="deleteCreative(' + c.id + ')" title="Delete Creative">🗑️ Delete</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                });
+
+                container.innerHTML = html;
+            };
+
+            // Update Campaign Dropdown Menus
+            function updateCampaignDropdowns() {
+                var filterSelect = document.getElementById('filter-creative-campaign');
+                var modalSelect = document.getElementById('creat-campaign');
+                var editModalSelect = document.getElementById('edit-creat-campaign');
+
+                var currentVal = filterSelect.value;
+                var options = '<option value="">All Campaigns</option>';
+                var modalOptions = '';
+
+                state.campaigns.forEach(function (c) {
+                    options += '<option value="' + c.id + '">' + escapeHtml(c.name) + ' (#' + c.id + ')</option>';
+                    modalOptions += '<option value="' + c.id + '">' + escapeHtml(c.name) + ' (#' + c.id + ')</option>';
+                });
+
+                filterSelect.innerHTML = options;
+                filterSelect.value = currentVal;
+                modalSelect.innerHTML = modalOptions;
+                if (editModalSelect) editModalSelect.innerHTML = modalOptions;
+            }
+
+            window.onSizeSelectChange = function (mode) {
+                var sizeVal = document.getElementById(mode === 'edit' ? 'edit-creat-size' : 'creat-size').value;
+                // If creating, suggest matching default sample SVG
+                if (mode === 'create') {
+                    var imgInput = document.getElementById('creat-image-url');
+                    if (!imgInput.value || imgInput.value.indexOf('/assets/creative_') !== -1) {
+                        imgInput.value = 'http://localhost:8000/assets/creative_techbrand_' + sizeVal + '.svg';
+                    }
+                }
+            };
+
+            // Edit Creative Modal & Handlers
+            window.openEditCreativeModal = function (id) {
+                var cr = state.creatives.find(function (c) { return c.id === id; });
+                if (!cr) return;
+
+                updateCampaignDropdowns();
+                document.getElementById('edit-creat-id').value = cr.id;
+                document.getElementById('edit-creat-campaign').value = cr.campaign_id;
+
+                var sizeKey = cr.width + 'x' + cr.height;
+                var selectElem = document.getElementById('edit-creat-size');
+                if (sizeKey === '300x250') {
+                    selectElem.value = '300x250';
+                } else {
+                    selectElem.value = '728x90';
+                }
+
+                document.getElementById('edit-creat-image-url').value = cr.image_url;
+                document.getElementById('edit-creat-click-url').value = cr.click_url;
+                document.getElementById('modal-edit-creative').classList.add('active');
+            };
+
+            window.handleUpdateCreative = function (e) {
+                e.preventDefault();
+                var id = document.getElementById('edit-creat-id').value;
+                var campId = parseInt(document.getElementById('edit-creat-campaign').value, 10);
+                var sizeVal = document.getElementById('edit-creat-size').value;
+                var parts = sizeVal.split('x');
+                var width = parseInt(parts[0], 10);
+                var height = parseInt(parts[1], 10);
+                var imgUrl = document.getElementById('edit-creat-image-url').value.trim();
+                var clickUrl = document.getElementById('edit-creat-click-url').value.trim();
+
+                fetch(apiBase + '/creatives/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        campaign_id: campId,
+                        width: width,
+                        height: height,
+                        image_url: imgUrl,
+                        click_url: clickUrl
+                    })
+                })
+                .then(function (res) {
+                    if (!res.ok) {
+                        return res.json().then(function (err) {
+                            throw new Error(err.error || ('HTTP ' + res.status));
+                        });
+                    }
+                    return res.json();
+                })
+                .then(function (updated) {
+                    closeModal('modal-edit-creative');
+                    showToast('Creative #' + id + ' updated successfully!', 'success');
+                    loadAllData();
+                })
+                .catch(function (err) {
+                    showToast('Failed to update creative: ' + err.message, 'error');
+                });
+            };
+
+            // Delete Creative Handler
+            window.deleteCreative = function (id) {
+                if (!confirm('Are you sure you want to delete creative #' + id + '?\n\nThis will permanently delete this banner asset and its associated tracking events.')) {
+                    return;
+                }
+
+                fetch(apiBase + '/creatives/' + id, {
+                    method: 'DELETE'
+                })
+                .then(function (res) {
+                    if (res.status !== 204 && !res.ok) {
+                        return res.json().then(function (err) {
+                            throw new Error(err.error || ('HTTP ' + res.status));
+                        });
+                    }
+                    showToast('Creative #' + id + ' deleted successfully!', 'success');
+                    loadAllData();
+                })
+                .catch(function (err) {
+                    showToast('Failed to delete creative: ' + err.message, 'error');
+                });
+            };
+
+            // Fetch & Render Performance Report
+            window.fetchReport = function () {
+                var fromDate = document.getElementById('rep-from').value;
+                var toDate = document.getElementById('rep-to').value;
+                var groupBy = document.getElementById('rep-group').value;
+
+                if (!fromDate || !toDate) {
+                    showToast('Please select both From and To dates', 'error');
+                    return;
+                }
+
+                var url = apiBase + '/report?from=' + encodeURIComponent(fromDate) + '&to=' + encodeURIComponent(toDate) + '&group_by=' + encodeURIComponent(groupBy);
+
+                fetch(url)
+                    .then(function (res) {
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        return res.json();
+                    })
+                    .then(function (data) {
+                        var rows = Array.isArray(data) ? data : (data.data || []);
+                        renderReportTable(rows, groupBy);
+                        computeAggregateKPIs(rows, groupBy);
+                    })
+                    .catch(function (err) {
+                        console.error('Error fetching report:', err);
+                        showToast('Failed to generate report: ' + err.message, 'error');
+                    });
+            };
+
+            function renderReportTable(rows, groupBy) {
+                var thead = document.getElementById('report-thead');
+                var tbody = document.getElementById('report-tbody');
+
+                if (groupBy === 'day') {
+                    thead.innerHTML = '<tr><th>Date</th><th>Impressions</th><th>Clicks</th><th>CTR Performance</th></tr>';
+                } else {
+                    thead.innerHTML = '<tr><th>Campaign</th><th>Impressions</th><th>Clicks</th><th>CTR Performance</th></tr>';
+                }
+
+                if (rows.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">No event traffic recorded in this date range.</td></tr>';
+                    return;
+                }
+
+                var html = '';
+                rows.forEach(function (r) {
+                    var title = groupBy === 'day' ? r.date : (r.campaign_name + ' (#' + r.campaign_id + ')');
+                    var ctrVal = (typeof r.ctr === 'number') ? r.ctr : parseFloat(r.ctr || 0);
+                    var ctrPercent = Math.min(100, Math.max(0, ctrVal));
+
+                    html += '<tr>' +
+                        '<td><strong>' + escapeHtml(title) + '</strong></td>' +
+                        '<td>' + (r.impressions || 0).toLocaleString() + '</td>' +
+                        '<td>' + (r.clicks || 0).toLocaleString() + '</td>' +
+                        '<td>' +
+                            '<div class="ctr-container">' +
+                                '<div class="ctr-bar-bg">' +
+                                    '<div class="ctr-bar-fill" style="width: ' + ctrPercent + '%;"></div>' +
+                                '</div>' +
+                                '<span class="ctr-text">' + ctrVal.toFixed(2) + '%</span>' +
+                            '</div>' +
+                        '</td>' +
+                        '</tr>';
+                });
+
+                tbody.innerHTML = html;
+            }
+
+            function computeAggregateKPIs(rows, groupBy) {
+                var totalImp = 0;
+                var totalClk = 0;
+
+                rows.forEach(function (r) {
+                    totalImp += (r.impressions || 0);
+                    totalClk += (r.clicks || 0);
+                });
+
+                document.getElementById('kpi-impressions').textContent = totalImp.toLocaleString();
+                document.getElementById('kpi-clicks').textContent = totalClk.toLocaleString();
+
+                var avgCtr = totalImp > 0 ? (totalClk / totalImp * 100) : 0;
+                document.getElementById('kpi-ctr').textContent = avgCtr.toFixed(2) + '%';
+            }
+
+            // Create Campaign Modal & Handler
+            window.openCreateCampaignModal = function () {
+                document.getElementById('modal-create-campaign').classList.add('active');
+            };
+
+            window.handleCreateCampaign = function (e) {
+                e.preventDefault();
+                var name = document.getElementById('camp-name').value.trim();
+                var limit = parseInt(document.getElementById('camp-limit').value, 10);
+                var status = document.getElementById('camp-status').value;
+
+                fetch(apiBase + '/campaigns', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        daily_impression_limit: limit,
+                        status: status
+                    })
+                })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                })
+                .then(function (newCamp) {
+                    closeModal('modal-create-campaign');
+                    document.getElementById('form-create-campaign').reset();
+                    showToast('Campaign "' + newCamp.name + '" created successfully!', 'success');
+                    fetchCampaigns();
+                })
+                .catch(function (err) {
+                    showToast('Error creating campaign: ' + err.message, 'error');
+                });
+            };
+
+            // Create Creative Modal & Handler
+            window.openCreateCreativeModal = function () {
+                if (state.campaigns.length === 0) {
+                    showToast('Please create a campaign first before adding creatives.', 'error');
+                    return;
+                }
+                updateCampaignDropdowns();
+                document.getElementById('creat-size').value = '728x90';
+                document.getElementById('creat-image-url').value = 'http://localhost:8000/assets/creative_techbrand_728x90.svg';
+                document.getElementById('modal-create-creative').classList.add('active');
+            };
+
+            window.handleCreateCreative = function (e) {
+                e.preventDefault();
+                var campId = parseInt(document.getElementById('creat-campaign').value, 10);
+                var sizeVal = document.getElementById('creat-size').value;
+                var parts = sizeVal.split('x');
+                var width = parseInt(parts[0], 10);
+                var height = parseInt(parts[1], 10);
+                var imgUrl = document.getElementById('creat-image-url').value.trim();
+                var clickUrl = document.getElementById('creat-click-url').value.trim();
+
+                fetch(apiBase + '/creatives', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        campaign_id: campId,
+                        width: width,
+                        height: height,
+                        image_url: imgUrl,
+                        click_url: clickUrl
+                    })
+                })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                })
+                .then(function (newCreat) {
+                    closeModal('modal-create-creative');
+                    document.getElementById('form-create-creative').reset();
+                    showToast('Creative asset #' + newCreat.id + ' added successfully!', 'success');
+                    fetchCreatives();
+                    fetchCampaigns(); // To update creative counts
+                })
+                .catch(function (err) {
+                    showToast('Error adding creative: ' + err.message, 'error');
+                });
+            };
+
+            window.closeModal = function (modalId) {
+                document.getElementById(modalId).classList.remove('active');
+            };
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return ('' + str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            window.loadAllData = function () {
+                checkHealth();
+                fetchCampaigns().then(function () {
+                    fetchCreatives();
+                });
+                fetchReport();
+            };
+
+            // Global Init
+            initDates();
+            loadAllData();
+            setInterval(checkHealth, 15000);
+
+        })();
+    </script>
+</body>
+</html>
+
