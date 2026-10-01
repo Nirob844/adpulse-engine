@@ -14,6 +14,8 @@ servers:
 tags:
   - name: Campaigns
     description: Advertising campaign management
+  - name: Creatives
+    description: Ad banner creative asset management
   - name: Ad Serving & Tracking
     description: Ad delivery and impression/click event tracking
   - name: Analytics & Reports
@@ -167,6 +169,105 @@ paths:
                 $ref: "#/components/schemas/Campaign"
         "404":
           description: Campaign not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /creatives:
+    post:
+      tags:
+        - Creatives
+      summary: Create a new creative
+      description: |
+        Creates an ad banner creative under an existing campaign.
+        - `campaign_id`: Required positive integer of an existing campaign.
+        - `width`: Required positive integer (e.g. 300, 728).
+        - `height`: Required positive integer (e.g. 250, 90).
+        - `image_url`: Required valid HTTP/HTTPS URL for the ad image.
+        - `click_url`: Required valid HTTP/HTTPS URL for the landing page.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCreativeRequest"
+      responses:
+        "201":
+          description: Creative created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Creative"
+        "400":
+          description: Validation error or invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Campaign not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      tags:
+        - Creatives
+      summary: List all creatives
+      description: Returns a list of all creatives, optionally filtered by campaign ID.
+      parameters:
+        - name: campaign_id
+          in: query
+          required: false
+          description: Optional filter by campaign ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Array of creatives
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Creative"
+        "400":
+          description: Invalid query parameter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /creatives/{id}:
+    get:
+      tags:
+        - Creatives
+      summary: Get creative details
+      description: Returns details of a single creative by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Creative details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Creative"
+        "400":
+          description: Invalid creative ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Creative not found
           content:
             application/json:
               schema:
@@ -361,6 +462,62 @@ components:
           type: string
           enum: [active, paused]
           example: "paused"
+
+    Creative:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        campaign_id:
+          type: integer
+          example: 1
+        width:
+          type: integer
+          example: 300
+        height:
+          type: integer
+          example: 250
+        image_url:
+          type: string
+          example: "https://placehold.co/300x250/2563eb/ffffff?text=TechBrand"
+        click_url:
+          type: string
+          example: "https://example.com/laptop"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-10-01T09:00:00Z"
+
+    CreateCreativeRequest:
+      type: object
+      required:
+        - campaign_id
+        - width
+        - height
+        - image_url
+        - click_url
+      properties:
+        campaign_id:
+          type: integer
+          minimum: 1
+          example: 1
+        width:
+          type: integer
+          minimum: 1
+          example: 300
+        height:
+          type: integer
+          minimum: 1
+          example: 250
+        image_url:
+          type: string
+          format: uri
+          example: "https://placehold.co/300x250/2563eb/ffffff?text=TechBrand"
+        click_url:
+          type: string
+          format: uri
+          example: "https://example.com/laptop"
 
     AdResponse:
       type: object

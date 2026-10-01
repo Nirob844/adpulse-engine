@@ -88,11 +88,20 @@ func main() {
 	campaignService := service.NewCampaignService(campaignRepo)
 	campaignHandler := handler.NewCampaignHandler(campaignService)
 
+	creativeRepo := repo.NewCreativeRepo(pool)
+	creativeService := service.NewCreativeService(creativeRepo, campaignRepo)
+	creativeHandler := handler.NewCreativeHandler(creativeService)
+
 	// Campaign endpoints
 	r.Post("/campaigns", campaignHandler.Create)
 	r.Patch("/campaigns/{id}", campaignHandler.UpdateStatus)
 	r.Get("/campaigns/{id}", campaignHandler.GetByID)
 	r.Get("/campaigns", campaignHandler.List)
+
+	// Creative endpoints
+	r.Post("/creatives", creativeHandler.Create)
+	r.Get("/creatives/{id}", creativeHandler.GetByID)
+	r.Get("/creatives", creativeHandler.List)
 
 	// Documentation endpoint
 	workDir, _ := os.Getwd()

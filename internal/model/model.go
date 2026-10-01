@@ -37,6 +37,18 @@ type Creative struct {
 	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 }
 
+// CreativeCandidate represents an active creative ready for ad serving.
+type CreativeCandidate struct {
+	ID                 int64  `json:"id" db:"id"`
+	CampaignID         int64  `json:"campaign_id" db:"campaign_id"`
+	CampaignName       string `json:"campaign_name" db:"campaign_name"`
+	CampaignDailyLimit int    `json:"campaign_daily_limit" db:"campaign_daily_limit"`
+	Width              int    `json:"width" db:"width"`
+	Height             int    `json:"height" db:"height"`
+	ImageURL           string `json:"image_url" db:"image_url"`
+	ClickURL           string `json:"click_url" db:"click_url"`
+}
+
 // AdEvent records an impression or click event.
 type AdEvent struct {
 	ID         int64     `json:"id" db:"id"`
