@@ -16,7 +16,7 @@
 
     var MiniAdTag = {
         version: '1.0.0',
-        apiBase: '', // Same origin by default
+        apiBase: (typeof window !== 'undefined' && window.location && window.location.port !== '8000') ? 'http://localhost:8000' : '',
 
         /**
          * Initialize all ad slots on the page.

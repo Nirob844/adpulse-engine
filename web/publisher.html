@@ -609,7 +609,7 @@
     </footer>
 
     <!-- Load Mini Ad Server Ad Tag Client -->
-    <script src="/adtag.js"></script>
+    <script src="adtag.js"></script>
 
     <!-- Publisher Page Instrumentation Script -->
     <script>
@@ -679,6 +679,15 @@
             window.clearEventLog = function () {
                 logContainer.innerHTML = '';
             };
+
+            // Adjust links if loaded from Live Server (e.g. port 5500)
+            if (window.location.port !== '8000') {
+                var backendOrigin = 'http://localhost:8000';
+                var links = document.querySelectorAll('a[href^="/"]');
+                for (var i = 0; i < links.length; i++) {
+                    links[i].href = backendOrigin + links[i].getAttribute('href');
+                }
+            }
 
             // Initial counter sync
             stats.requested = document.querySelectorAll('.ad-slot').length;
