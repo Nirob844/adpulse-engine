@@ -17,6 +17,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/nirob844/mini-ad-server/internal/config"
 	"github.com/nirob844/mini-ad-server/internal/db"
+	"github.com/nirob844/mini-ad-server/internal/handler"
+	"github.com/nirob844/mini-ad-server/internal/repo"
 )
 
 func main() {
@@ -81,7 +83,16 @@ func main() {
 		})
 	})
 
-	// 6. Serve static files from web/ folder (e.g. / -> web/index.html, /publisher.html)
+	// 6. Initialize Repositories and Handlers
+	campaignRepo := repo.NewCampaignRepo(pool)
+	campaignHandler := handler.NewCampaignHandler(campaignRepo)
+
+	// Campaign endpoints
+	r.Post("/campaigns", campaignHandler.Create)
+	r.Patch("/campaigns/{id}", campaignHandler.UpdateStatus)
+	r.Get("/campaigns", campaignHandler.List)
+
+	// 7. Serve static files from web/ folder (e.g. / -> web/index.html, /publisher.html)
 	workDir, _ := os.Getwd()
 	filesDir := filepath.Join(workDir, "web")
 	fileServer(r, "/", http.Dir(filesDir))
