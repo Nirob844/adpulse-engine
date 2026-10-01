@@ -412,6 +412,67 @@
             color: #ffffff;
             margin-top: 4px;
         }
+        .simulator-toolbar {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .sim-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .sim-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sim-select {
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+        .sim-select:focus {
+            border-color: #38bdf8;
+        }
+        .sim-input {
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            outline: none;
+            width: 140px;
+        }
+        .sim-input:focus {
+            border-color: #38bdf8;
+        }
+        .sim-badge {
+            background: #065f46;
+            color: #d1fae5;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 12px;
+            border: 1px solid #059669;
+        }
         .event-log {
             background: #020617;
             border: 1px solid #1e293b;
@@ -591,6 +652,27 @@
                 </div>
             </div>
 
+            <!-- Client IP Simulation Toolbar -->
+            <div class="simulator-toolbar">
+                <div class="sim-group">
+                    <span class="sim-label">🌐 Client IP Simulator:</span>
+                    <select id="sim-ip-select" class="sim-select" onchange="changeClientIP(this.value)">
+                        <option value="">Auto (Real Client IP)</option>
+                        <option value="192.168.1.101">User 1 (192.168.1.101 - Tech Fan)</option>
+                        <option value="192.168.1.102">User 2 (192.168.1.102 - Cloud Dev)</option>
+                        <option value="192.168.1.103">User 3 (192.168.1.103 - Coffee Lover)</option>
+                        <option value="10.0.0.50">User 4 (10.0.0.50 - Mobile User)</option>
+                        <option value="custom">✏️ Enter Custom IP...</option>
+                    </select>
+                    <input type="text" id="sim-custom-ip" class="sim-input" placeholder="e.g. 172.16.0.42" style="display: none;" onkeydown="if(event.key==='Enter') applyCustomIP()">
+                    <button class="btn" id="btn-apply-ip" style="display: none; padding: 4px 10px;" onclick="applyCustomIP()">Apply</button>
+                </div>
+                <div class="sim-group">
+                    <span class="sim-badge" id="sim-active-badge">Active IP: Auto (Real IP)</span>
+                    <button class="btn" style="padding: 4px 10px;" onclick="simulateImpressionBurst()" title="Simulate 3 rapid ad loads to test frequency cap">⚡ Quick 3x Load</button>
+                </div>
+            </div>
+
             <!-- Stats Bar -->
             <div class="inspector-stats">
                 <div class="stat-card">
@@ -670,13 +752,15 @@
             window.addEventListener('miniad:loaded', function (e) {
                 stats.loaded++;
                 statLoad.textContent = stats.loaded;
-                addLog('load', 'LOAD', 'Creative #' + e.detail.creativeId + ' rendered for slot ' + e.detail.size + ' (Click target: ' + e.detail.clickUrl + ')');
+                var ipInfo = e.detail && e.detail.clientIP ? ' [IP: ' + e.detail.clientIP + ']' : '';
+                addLog('load', 'LOAD', 'Creative #' + e.detail.creativeId + ' rendered for slot ' + e.detail.size + ipInfo);
             });
 
             window.addEventListener('miniad:impression', function (e) {
                 stats.impressions++;
                 statImp.textContent = stats.impressions;
-                addLog('impression', 'IMPRESSION', 'Pixel beacon fired for creative #' + e.detail.creativeId + ' (' + e.detail.impressionUrl + ')');
+                var ipInfo = e.detail && e.detail.clientIP ? ' [IP: ' + e.detail.clientIP + ']' : '';
+                addLog('impression', 'IMPRESSION', 'Pixel beacon fired for creative #' + e.detail.creativeId + ipInfo);
             });
 
             window.addEventListener('miniad:click', function (e) {
@@ -685,16 +769,66 @@
                     localStorage.setItem('miniad_clicks', stats.clicks);
                 } catch (err) {}
                 statClk.textContent = stats.clicks;
-                addLog('click', 'CLICK', 'User clicked ad creative #' + e.detail.creativeId + ' &rarr; redirecting via ' + e.detail.clickUrl);
+                var ipInfo = e.detail && e.detail.clientIP ? ' [IP: ' + e.detail.clientIP + ']' : '';
+                addLog('click', 'CLICK', 'User clicked ad creative #' + e.detail.creativeId + ipInfo + ' &rarr; redirecting via ' + e.detail.clickUrl);
             });
 
             window.addEventListener('miniad:empty', function (e) {
-                addLog('empty', '204 EMPTY', 'No candidate ad available for slot ' + e.detail.size + ' (frequency cap reached or campaign limit exhausted)');
+                var ipInfo = e.detail && e.detail.clientIP ? ' for IP ' + e.detail.clientIP + ' ' : ' ';
+                addLog('empty', '204 EMPTY', 'No candidate ad available for slot ' + e.detail.size + ipInfo + '(Frequency cap reached or campaign limit exhausted)');
             });
 
             window.addEventListener('miniad:error', function (e) {
                 addLog('error', 'ERROR', 'Error on slot ' + e.detail.size + ': ' + e.detail.error);
             });
+
+            // IP Simulator Functions
+            window.changeClientIP = function (val) {
+                var customInput = document.getElementById('sim-custom-ip');
+                var applyBtn = document.getElementById('btn-apply-ip');
+                if (val === 'custom') {
+                    if (customInput) customInput.style.display = 'inline-block';
+                    if (applyBtn) applyBtn.style.display = 'inline-block';
+                    if (customInput) customInput.focus();
+                    return;
+                }
+                if (customInput) customInput.style.display = 'none';
+                if (applyBtn) applyBtn.style.display = 'none';
+                applyIP(val);
+            };
+
+            window.applyCustomIP = function () {
+                var customInput = document.getElementById('sim-custom-ip');
+                var ip = customInput ? customInput.value.trim() : '';
+                if (ip) {
+                    applyIP(ip);
+                }
+            };
+
+            function applyIP(ip) {
+                var badge = document.getElementById('sim-active-badge');
+                if (badge) {
+                    badge.textContent = 'Active IP: ' + (ip || 'Auto (Real IP)');
+                }
+                stats.requested += 2;
+                statReq.textContent = stats.requested;
+                addLog('load', 'IP SWITCH', 'Simulated Client IP switched to: ' + (ip || 'Auto (Real IP)'));
+                if (window.MiniAdTag) {
+                    window.MiniAdTag.setSimulatedIP(ip);
+                }
+            }
+
+            window.simulateImpressionBurst = function () {
+                addLog('load', 'BURST', 'Triggering 3 rapid refreshes to test frequency cap...');
+                var count = 0;
+                var interval = setInterval(function () {
+                    count++;
+                    window.refreshAds();
+                    if (count >= 3) {
+                        clearInterval(interval);
+                    }
+                }, 350);
+            };
 
             // Global functions for toolbar buttons
             window.refreshAds = function () {

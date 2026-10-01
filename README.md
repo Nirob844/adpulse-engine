@@ -199,6 +199,7 @@ Navigate to `http://localhost:8000/publisher.html` in your browser.
   - **Guaranteed Single Fire**: Guarded by a boolean flag and `{ once: true }` event listener.
   - Handles `204 No Content` with graceful UI notices without breaking page layout.
 - **Live Event Inspector**: Embedded bottom panel displaying real-time metrics, live event logs (`LOAD`, `IMPRESSION`, `CLICK`, `204 EMPTY`), and buttons to refresh slots.
+- **Interactive Client IP Simulator**: Switch between simulated client IPs (`Auto`, `192.168.1.101`, `192.168.1.102`, or custom IP) with a single click to easily test and demonstrate Redis IP frequency capping in real time!
 
 ---
 

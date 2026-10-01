@@ -17,6 +17,16 @@
     var MiniAdTag = {
         version: '1.0.0',
         apiBase: (typeof window !== 'undefined' && window.location && window.location.port !== '8000') ? 'http://localhost:8000' : '',
+        simulatedIP: '',
+
+        /**
+         * Set simulated client IP for testing frequency capping and refresh slots.
+         * @param {string} ip
+         */
+        setSimulatedIP: function (ip) {
+            this.simulatedIP = ip ? ip.trim() : '';
+            this.refreshAll();
+        },
 
         /**
          * Initialize all ad slots on the page.
@@ -62,6 +72,9 @@
             slot.innerHTML = '<div class="ad-slot-spinner" title="Loading ad..."></div>';
 
             var adUrl = (this.apiBase || '') + '/ad?size=' + encodeURIComponent(size);
+            if (this.simulatedIP) {
+                adUrl += '&ip=' + encodeURIComponent(this.simulatedIP);
+            }
             var self = this;
 
             fetch(adUrl, {
@@ -121,6 +134,17 @@
                 }
             }
 
+            // Propagate simulated client IP to tracking beacons
+            if (this.simulatedIP) {
+                var ipQuery = 'ip=' + encodeURIComponent(this.simulatedIP);
+                if (clickUrl.indexOf('ip=') === -1) {
+                    clickUrl += (clickUrl.indexOf('?') === -1 ? '?' : '&') + ipQuery;
+                }
+                if (impressionUrl.indexOf('ip=') === -1) {
+                    impressionUrl += (impressionUrl.indexOf('?') === -1 ? '?' : '&') + ipQuery;
+                }
+            }
+
             // 1. Create tracking click anchor
             var anchor = document.createElement('a');
             anchor.href = clickUrl;
@@ -177,6 +201,7 @@
                     creativeId: creativeId,
                     impressionUrl: impressionUrl,
                     clickUrl: clickUrl,
+                    clientIP: self.simulatedIP || 'Auto (Real IP)',
                     timestamp: new Date().toISOString()
                 };
 
@@ -225,6 +250,7 @@
                         size: size,
                         creativeId: creativeId,
                         clickUrl: clickUrl,
+                        clientIP: self.simulatedIP || 'Auto (Real IP)',
                         timestamp: new Date().toISOString()
                     }
                 });
@@ -239,6 +265,7 @@
                     creativeId: creativeId,
                     clickUrl: clickUrl,
                     impressionUrl: impressionUrl,
+                    clientIP: self.simulatedIP || 'Auto (Real IP)',
                     timestamp: new Date().toISOString()
                 }
             });
@@ -261,6 +288,7 @@
                     slotId: slot.id || null,
                     size: size,
                     status: 204,
+                    clientIP: this.simulatedIP || 'Auto (Real IP)',
                     timestamp: new Date().toISOString()
                 }
             });

@@ -74,8 +74,11 @@ func parseDimensions(sizeStr string) (int, int, error) {
 	return width, height, nil
 }
 
-// getClientIP extracts the real client IP address from standard proxy headers or RemoteAddr.
+// getClientIP extracts the real client IP address from query param (?ip=), standard proxy headers, or RemoteAddr.
 func getClientIP(r *http.Request) string {
+	if simIP := strings.TrimSpace(r.URL.Query().Get("ip")); simIP != "" {
+		return simIP
+	}
 	if xRealIP := r.Header.Get("X-Real-IP"); xRealIP != "" {
 		return strings.TrimSpace(xRealIP)
 	}
