@@ -85,8 +85,8 @@ func NewRouter(cfg RouterConfig) chi.Router {
 	creativeService := service.NewCreativeService(creativeRepo, campaignRepo)
 	creativeHandler := handler.NewCreativeHandler(creativeService)
 
-	freqCapMax := 3
-	if cfg.Config != nil && cfg.Config.FrequencyCapMax > 0 {
+	freqCapMax := 100
+	if cfg.Config != nil {
 		freqCapMax = cfg.Config.FrequencyCapMax
 	}
 	adService := service.NewAdService(creativeRepo, eventRepo, cfg.Redis, freqCapMax)

@@ -54,8 +54,10 @@
             var height = parseInt(parts[1], 10);
 
             // Set slot dimensions and styling
-            slot.style.width = width ? width + 'px' : 'auto';
-            slot.style.minHeight = height ? height + 'px' : 'auto';
+            if (width && height) {
+                slot.style.width = width + 'px';
+                slot.style.height = height + 'px';
+            }
             slot.classList.add('ad-slot-loading');
             slot.innerHTML = '<div class="ad-slot-spinner" title="Loading ad..."></div>';
 
@@ -125,6 +127,11 @@
             anchor.target = '_blank';
             anchor.rel = 'noopener noreferrer';
             anchor.className = 'ad-link';
+            anchor.style.display = 'flex';
+            anchor.style.alignItems = 'center';
+            anchor.style.justifyContent = 'center';
+            anchor.style.width = '100%';
+            anchor.style.height = '100%';
             anchor.setAttribute('data-creative-id', creativeId);
             anchor.setAttribute('aria-label', 'Advertisement creative #' + creativeId);
 
@@ -180,16 +187,21 @@
             }
 
             if (imgElem) {
+                imgElem.style.display = 'block';
+                imgElem.style.width = '100%';
+                imgElem.style.height = '100%';
+                imgElem.style.objectFit = 'contain';
+
                 // If relative src and apiBase is set, fix src
                 if (self.apiBase && imgElem.getAttribute('src') && imgElem.getAttribute('src').indexOf('http') !== 0) {
                     imgElem.src = self.apiBase + imgElem.getAttribute('src');
                 }
 
-                // Error fallback: If external image fails (e.g. placehold.co blocked by ISP or ad blocker), fallback to reliable local SVG banner
+                // Error fallback: If external image fails, fallback to reliable local SVG creative
                 imgElem.addEventListener('error', function () {
-                    var fallbackSvg = (self.apiBase || '') + '/assets/banner_' + size + '.svg';
+                    var fallbackSvg = (self.apiBase || '') + '/assets/creative_' + size + '.svg';
                     if (imgElem.src !== fallbackSvg) {
-                        console.warn('[MiniAdTag] Creative image #' + creativeId + ' failed to load. Switching to local SVG banner:', fallbackSvg);
+                        console.warn('[MiniAdTag] Creative image #' + creativeId + ' failed to load. Switching to local SVG:', fallbackSvg);
                         imgElem.src = fallbackSvg;
                     }
                 }, { once: true });

@@ -250,20 +250,37 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
             transition: all 0.2s ease;
         }
+        .ad-slot[data-ad-size="728x90"] {
+            width: 728px;
+            height: 90px;
+            max-width: 100%;
+        }
+        .ad-slot[data-ad-size="300x250"] {
+            width: 300px;
+            height: 250px;
+        }
         .ad-slot:hover {
             border-color: #94a3b8;
         }
         .ad-slot a.ad-link {
-            display: inline-block;
-            line-height: 0;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            width: 100% !important;
+            height: 100% !important;
             cursor: pointer;
             text-decoration: none;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         .ad-slot img {
-            display: block;
-            max-width: 100%;
-            height: auto;
-            border: none;
+            display: block !important;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
+            border: none !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         /* Ad Slot Loading & Empty States */
@@ -534,7 +551,7 @@
 
                 <h3>Campaign Quotas and IP Frequency Capping</h3>
                 <p>
-                    To ensure high advertiser return-on-ad-spend (ROAS), the serving engine enforces daily impression quotas per campaign and an IP-based frequency cap (at most 3 impressions per creative per client IP per 24 hours). This mitigates impression burnout and balances brand visibility across unique audiences.
+                    To ensure high advertiser return-on-ad-spend (ROAS), the serving engine enforces daily impression quotas per campaign and an IP-based frequency cap (configurable via <code>AD_FREQ_CAP_MAX</code> per creative per client IP per 24 hours). This mitigates impression burnout and balances brand visibility across unique audiences.
                 </p>
             </article>
 
@@ -619,11 +636,12 @@
     <!-- Publisher Page Instrumentation Script -->
     <script>
         (function () {
+            var storedClicks = parseInt(localStorage.getItem('miniad_clicks') || '0', 10);
             var stats = {
                 requested: 0,
                 loaded: 0,
                 impressions: 0,
-                clicks: 0
+                clicks: storedClicks
             };
 
             var statReq = document.getElementById('stat-requested');
@@ -631,6 +649,10 @@
             var statImp = document.getElementById('stat-impressions');
             var statClk = document.getElementById('stat-clicks');
             var logContainer = document.getElementById('event-log');
+
+            if (statClk) {
+                statClk.textContent = stats.clicks;
+            }
 
             function addLog(tagClass, tagText, message) {
                 var now = new Date();
@@ -659,6 +681,9 @@
 
             window.addEventListener('miniad:click', function (e) {
                 stats.clicks++;
+                try {
+                    localStorage.setItem('miniad_clicks', stats.clicks);
+                } catch (err) {}
                 statClk.textContent = stats.clicks;
                 addLog('click', 'CLICK', 'User clicked ad creative #' + e.detail.creativeId + ' &rarr; redirecting via ' + e.detail.clickUrl);
             });
@@ -683,6 +708,13 @@
 
             window.clearEventLog = function () {
                 logContainer.innerHTML = '';
+                try {
+                    localStorage.removeItem('miniad_clicks');
+                } catch (err) {}
+                stats.clicks = 0;
+                if (statClk) {
+                    statClk.textContent = 0;
+                }
             };
 
             // Adjust links if loaded from Live Server (e.g. port 5500)

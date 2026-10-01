@@ -31,7 +31,16 @@ func Load() (*Config, error) {
 	dbURL := getEnv("DATABASE_URL", "postgres://adserver:adserver_secret@localhost:5434/adserver_db?sslmode=disable")
 	redisURL := getEnv("REDIS_URL", "redis://localhost:6381/0")
 
-	freqCap := getEnvAsInt("FREQUENCY_CAP_MAX", 3)
+	freqCap := 100
+	if val := getEnv("AD_FREQ_CAP_MAX", ""); val != "" {
+		if v, err := strconv.Atoi(val); err == nil {
+			freqCap = v
+		}
+	} else if val := getEnv("FREQUENCY_CAP_MAX", ""); val != "" {
+		if v, err := strconv.Atoi(val); err == nil {
+			freqCap = v
+		}
+	}
 	batchSize := getEnvAsInt("BATCH_SIZE", 100)
 	batchFlushMs := getEnvAsInt("BATCH_FLUSH_INTERVAL_MS", 100)
 	logLevel := getEnv("LOG_LEVEL", "info")

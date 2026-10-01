@@ -112,7 +112,7 @@ All standard requirements and **100% of optional bonus features** are fully impl
 - [x] **Demo Publisher Page (`/publisher.html`)**: Complete news publication layout with two active ad slots (`728x90` leaderboard & `300x250` rectangle), live inspector panel, and event log.
 - [x] **Standalone Ad Tag (`/adtag.js`)**: Auto-discovers slots, fetches ads asynchronously, binds click anchors, listens for image `load` events to fire impression beacons, and guarantees once-per-load tracking.
 - [x] **Bonus 1 — Redis Candidate Caching**: Active creative lists per dimension are cached in Redis with a 60-second TTL (`ad:candidates:{size}`).
-- [x] **Bonus 2 — IP Frequency Capping**: Limits impressions to **at most 3 impressions per creative per IP per day** using Redis atomic counters (`ad:freq:{ip}:{creative_id}:{date}`).
+- [x] **Bonus 2 — IP Frequency Capping**: Limits impressions per creative per client IP per day using Redis atomic counters (`ad:freq:{ip}:{creative_id}:{date}`). Configurable via `AD_FREQ_CAP_MAX` (defaults to 100 for seamless local testing, or custom cap; `0` disables).
 - [x] **Bonus 3 — Campaign Daily Impression Limit Enforcement**: Tracks daily impression delivery and stops serving campaigns once their `daily_impression_limit` is satisfied (`ad:daily:campaign:{id}:{date}`).
 
 ---
@@ -260,6 +260,19 @@ Navigate to `http://localhost:8000/publisher.html` in your browser.
    2026/10/01 13:00:00 INFO Connected to Redis successfully
    2026/10/01 13:00:00 INFO Server listening on port 8000
    ```
+
+---
+
+## Environment Variables Configuration
+
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `SERVER_PORT` / `PORT` | `8000` | Port for the HTTP server to listen on |
+| `DATABASE_URL` | `postgres://adserver:...` | PostgreSQL connection string |
+| `REDIS_URL` | `redis://localhost:6381/0` | Redis connection URL |
+| `AD_FREQ_CAP_MAX` | `100` | Max impressions allowed per creative per client IP per day (`0` disables capping) |
+| `FREQUENCY_CAP_MAX` | `100` | Fallback alias for frequency capping |
+| `LOG_LEVEL` | `info` | Structured log level (`debug`, `info`, `warn`, `error`) |
 
 ---
 
