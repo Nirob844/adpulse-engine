@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Ad Server</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; margin: 0; }
+        .container { max-width: 800px; margin: 0 auto; background: #1e293b; padding: 32px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        h1 { color: #38bdf8; margin-top: 0; }
+        p { color: #94a3b8; font-size: 16px; line-height: 1.6; }
+        .links { margin-top: 24px; display: flex; gap: 16px; }
+        a { display: inline-block; background: #2563eb; color: #fff; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: 500; transition: background 0.2s; }
+        a:hover { background: #1d4ed8; }
+        .badge { background: #10b981; color: #064e3b; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mini Ad Server <span class="badge">Running</span></h1>
+        <p>A high-performance Go ad serving engine backed by PostgreSQL and Redis.</p>
+        <div class="links">
+            <a href="/publisher.html">View Demo Publisher Page</a>
+            <a href="/health" style="background: #334155;">Health Check API</a>
+        </div>
+    </div>
+</body>
+</html>
+
