@@ -130,7 +130,11 @@
 
             // 2. Insert creative HTML (or construct <img> fallback)
             if (adData.html) {
-                anchor.innerHTML = adData.html;
+                var html = adData.html;
+                if (this.apiBase) {
+                    html = html.replace(/src="\/([^"]+)"/g, 'src="' + this.apiBase + '/$1"');
+                }
+                anchor.innerHTML = html;
             } else if (adData.image_url) {
                 var imgUrl = adData.image_url;
                 if (this.apiBase && imgUrl.indexOf('http') !== 0) {

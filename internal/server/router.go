@@ -146,10 +146,13 @@ func fileServer(r chi.Router, path string, root http.FileSystem) {
 	}
 	path += "*"
 
-	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
+	handlerFunc := func(w http.ResponseWriter, r *http.Request) {
 		rctx := chi.RouteContext(r.Context())
 		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
 		fs := http.StripPrefix(pathPrefix, http.FileServer(root))
 		fs.ServeHTTP(w, r)
-	})
+	}
+
+	r.Get(path, handlerFunc)
+	r.Head(path, handlerFunc)
 }

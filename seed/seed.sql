@@ -15,16 +15,16 @@ INSERT INTO campaigns (id, name, status, daily_impression_limit, created_at, upd
 -- 2. Insert Creatives (Every campaign has both 300x250 and 728x90)
 INSERT INTO creatives (id, campaign_id, width, height, image_url, click_url, created_at) VALUES
 -- Campaign 1: TechBrand NextGen Laptop (Active)
-(1, 1, 300, 250, 'https://placehold.co/300x250/2563eb/ffffff?text=TechBrand+NextGen%0A300x250', 'https://example.com/techbrand-laptop?ref=miniad', NOW() - INTERVAL '3 days'),
-(2, 1, 728, 90,  'https://placehold.co/728x90/2563eb/ffffff?text=TechBrand+NextGen+Leaderboard+728x90', 'https://example.com/techbrand-laptop?ref=miniad', NOW() - INTERVAL '3 days'),
+(1, 1, 300, 250, '/assets/banner_techbrand_300x250.svg', 'https://example.com/techbrand-laptop?ref=miniad', NOW() - INTERVAL '3 days'),
+(2, 1, 728, 90,  '/assets/banner_techbrand_728x90.svg',   'https://example.com/techbrand-laptop?ref=miniad', NOW() - INTERVAL '3 days'),
 
 -- Campaign 2: CloudDev Serverless Platform (Active)
-(3, 2, 300, 250, 'https://placehold.co/300x250/7c3aed/ffffff?text=CloudDev+Serverless%0A300x250', 'https://example.com/clouddev?ref=miniad', NOW() - INTERVAL '2 days'),
-(4, 2, 728, 90,  'https://placehold.co/728x90/7c3aed/ffffff?text=CloudDev+Serverless+Leaderboard+728x90', 'https://example.com/clouddev?ref=miniad', NOW() - INTERVAL '2 days'),
+(3, 2, 300, 250, '/assets/banner_clouddev_300x250.svg',  'https://example.com/clouddev?ref=miniad', NOW() - INTERVAL '2 days'),
+(4, 2, 728, 90,  '/assets/banner_clouddev_728x90.svg',   'https://example.com/clouddev?ref=miniad', NOW() - INTERVAL '2 days'),
 
 -- Campaign 3: CoffeeRoast Artisanal Beans (Active)
-(5, 3, 300, 250, 'https://placehold.co/300x250/b45309/ffffff?text=CoffeeRoast+Artisanal%0A300x250', 'https://example.com/coffeeroast?ref=miniad', NOW() - INTERVAL '2 days'),
-(6, 3, 728, 90,  'https://placehold.co/728x90/b45309/ffffff?text=CoffeeRoast+Artisanal+Leaderboard+728x90', 'https://example.com/coffeeroast?ref=miniad', NOW() - INTERVAL '2 days'),
+(5, 3, 300, 250, '/assets/banner_coffee_300x250.svg',    'https://example.com/coffeeroast?ref=miniad', NOW() - INTERVAL '2 days'),
+(6, 3, 728, 90,  '/assets/banner_coffee_728x90.svg',     'https://example.com/coffeeroast?ref=miniad', NOW() - INTERVAL '2 days'),
 
 -- Campaign 4: Summer Flash Sale (Paused)
 (7, 4, 300, 250, 'https://placehold.co/300x250/64748b/ffffff?text=Summer+Sale+(Paused)%0A300x250', 'https://example.com/summer-sale?ref=miniad', NOW() - INTERVAL '5 days'),

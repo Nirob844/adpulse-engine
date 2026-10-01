@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="728" height="90" viewBox="0 0 728 90">
+  <defs>
+    <linearGradient id="crGradL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#451a03;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#78350f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b45309;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="728" height="90" fill="url(#crGradL)" rx="4"/>
+  <rect x="2" y="2" width="724" height="86" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" rx="3"/>
+  
+  <!-- Left Brand Icon & Text -->
+  <circle cx="50" cy="45" r="24" fill="#ffffff" fill-opacity="0.15"/>
+  <text x="50" y="52" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="900" fill="#ffffff" text-anchor="middle">&#9749;</text>
+  
+  <text x="90" y="42" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="800" fill="#ffffff" letter-spacing="0.5">CoffeeRoast Artisanal Single-Origin</text>
+  <text x="90" y="62" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="13" fill="#fde68a">Small-batch Roasted in London &#8226; Whole Bean &amp; Espresso &#8226; Free Carbon-Neutral Shipping</text>
+  
+  <!-- Right CTA Button -->
+  <rect x="570" y="26" width="138" height="38" rx="19" fill="#ffffff"/>
+  <text x="639" y="50" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="800" fill="#78350f" text-anchor="middle">ORDER COFFEE &#8594;</text>
+</svg>
