@@ -1,0 +1,425 @@
+openapi: 3.0.3
+info:
+  title: Mini Ad Server API
+  description: |
+    A high-performance ad-serving engine built in Go with PostgreSQL and Redis.
+    Provides campaign management, real-time ad selection, pixel tracking, and CTR reporting.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local Development Server
+  - url: /
+    description: Current Server
+
+tags:
+  - name: Campaigns
+    description: Advertising campaign management
+  - name: Ad Serving & Tracking
+    description: Ad delivery and impression/click event tracking
+  - name: Analytics & Reports
+    description: Aggregate reporting with impressions, clicks, and CTR metrics
+  - name: System
+    description: Health and readiness checks
+
+paths:
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check endpoint
+      description: Returns service status and PostgreSQL connectivity.
+      responses:
+        "200":
+          description: Service is healthy and database is connected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  database:
+                    type: string
+                    example: connected
+                  time:
+                    type: string
+                    example: "2026-10-01T10:00:00Z"
+        "503":
+          description: Database connection is unavailable
+
+  /campaigns:
+    post:
+      tags:
+        - Campaigns
+      summary: Create a new campaign
+      description: |
+        Creates an advertising campaign.
+        - `name`: Required non-empty string.
+        - `daily_impression_limit`: Required positive integer (> 0). String numbers (e.g. `"5"`) and floats (e.g. `1.5`) are rejected.
+        - `status`: Optional, defaults to `"active"`. Allowed: `"active"`, `"paused"`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCampaignRequest"
+            examples:
+              valid:
+                value:
+                  name: "Spring Sale 2026"
+                  daily_impression_limit: 5000
+                  status: "active"
+      responses:
+        "201":
+          description: Campaign successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      tags:
+        - Campaigns
+      summary: List all campaigns
+      description: Returns an array of all campaigns ordered by ID.
+      responses:
+        "200":
+          description: List of campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Campaign"
+
+  /campaigns/{id}:
+    patch:
+      tags:
+        - Campaigns
+      summary: Update campaign status
+      description: Pauses or resumes a campaign by updating its status to `"active"` or `"paused"`.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Positive integer campaign ID
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCampaignRequest"
+            examples:
+              pause:
+                value:
+                  status: "paused"
+              resume:
+                value:
+                  status: "active"
+      responses:
+        "200":
+          description: Campaign successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "400":
+          description: Invalid ID parameter or status value
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Campaign not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      tags:
+        - Campaigns
+      summary: Get campaign details
+      description: Returns details of a single campaign by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Campaign details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "404":
+          description: Campaign not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ad:
+    get:
+      tags:
+        - Ad Serving & Tracking
+      summary: Request an ad creative
+      description: |
+        Returns an eligible creative matching the requested size from active campaigns.
+        Selection is randomized among eligible candidates.
+        If no matching active creative is found, responds with `204 No Content`.
+      parameters:
+        - name: size
+          in: query
+          required: true
+          description: Ad slot dimension formatted as `{width}x{height}` (e.g. `300x250` or `728x90`)
+          schema:
+            type: string
+            example: "300x250"
+      responses:
+        "200":
+          description: Chosen creative rendered as JSON payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdResponse"
+        "204":
+          description: No Content - No active creative matched the requested size
+        "400":
+          description: Invalid size parameter format
+
+  /track/impression:
+    get:
+      tags:
+        - Ad Serving & Tracking
+      summary: Track an impression event
+      description: |
+        Records an impression event for the creative and responds with an optimized 43-byte 1x1 transparent GIF (`image/gif`).
+        Set with strict no-cache headers.
+      parameters:
+        - name: c
+          in: query
+          required: true
+          description: Creative ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: 1x1 Transparent GIF
+          content:
+            image/gif:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Unknown creative ID
+
+  /track/click:
+    get:
+      tags:
+        - Ad Serving & Tracking
+      summary: Track a click event
+      description: |
+        Records a click event for the creative and responds with an HTTP 302 Found redirect to the creative's landing page (`click_url`).
+      parameters:
+        - name: c
+          in: query
+          required: true
+          description: Creative ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "302":
+          description: Redirect to creative landing page
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Destination landing page URL
+        "404":
+          description: Unknown creative ID
+
+  /report:
+    get:
+      tags:
+        - Analytics & Reports
+      summary: Performance and CTR analytics report
+      description: |
+        Returns impressions, clicks, and CTR (%) per group.
+        - `from` and `to` are `YYYY-MM-DD` dates (inclusive).
+        - `group_by` defaults to `campaign`. Options: `campaign` or `day`.
+        - CTR is `(clicks / impressions) * 100`, and `0` when impressions are `0`.
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date (inclusive, YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2026-10-01"
+        - name: to
+          in: query
+          required: true
+          description: End date (inclusive, YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2026-10-01"
+        - name: group_by
+          in: query
+          required: false
+          description: Grouping attribute (`campaign` or `day`, default `campaign`)
+          schema:
+            type: string
+            enum: [campaign, day]
+            default: campaign
+      responses:
+        "200":
+          description: Aggregated report rows
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/CampaignReportRow"
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/DayReportRow"
+        "400":
+          description: Invalid date format, from after to, or unknown group_by
+
+components:
+  schemas:
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "TechBrand NextGen Laptop"
+        status:
+          type: string
+          enum: [active, paused]
+          example: "active"
+        daily_impression_limit:
+          type: integer
+          example: 5000
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-10-01T09:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-10-01T09:00:00Z"
+
+    CreateCampaignRequest:
+      type: object
+      required:
+        - name
+        - daily_impression_limit
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: "TechBrand NextGen Laptop"
+        daily_impression_limit:
+          type: integer
+          minimum: 1
+          example: 5000
+        status:
+          type: string
+          enum: [active, paused]
+          default: active
+          example: "active"
+
+    UpdateCampaignRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [active, paused]
+          example: "paused"
+
+    AdResponse:
+      type: object
+      properties:
+        creative_id:
+          type: integer
+          example: 1
+        html:
+          type: string
+          example: '<img src="https://placehold.co/300x250/2563eb/ffffff?text=TechBrand" width="300" height="250" alt="Advertisement" />'
+        impression_url:
+          type: string
+          example: "/track/impression?c=1"
+        click_url:
+          type: string
+          example: "/track/click?c=1"
+
+    CampaignReportRow:
+      type: object
+      properties:
+        campaign_id:
+          type: integer
+          example: 1
+        campaign_name:
+          type: string
+          example: "TechBrand NextGen Laptop"
+        impressions:
+          type: integer
+          example: 1200
+        clicks:
+          type: integer
+          example: 48
+        ctr:
+          type: number
+          format: float
+          example: 4.0
+
+    DayReportRow:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2026-10-01"
+        impressions:
+          type: integer
+          example: 1200
+        clicks:
+          type: integer
+          example: 48
+        ctr:
+          type: number
+          format: float
+          example: 4.0
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "daily_impression_limit must be a positive integer"
+
