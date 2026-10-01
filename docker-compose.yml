@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: adserver_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-adserver}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-adserver_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-adserver_db}
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations/001_init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+      - ./seed/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-adserver} -d ${POSTGRES_DB:-adserver_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - adserver_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: adserver_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6381}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - adserver_network
+
+volumes:
+  postgres_data:
+    name: adserver_postgres_data
+  redis_data:
+    name: adserver_redis_data
+
+networks:
+  adserver_network:
+    name: adserver_network
+    driver: bridge
+
