@@ -1,0 +1,70 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ------------------------------------
+  # 1. CI Job: Test & Verification
+  # ------------------------------------
+  test:
+    name: Run Tests & Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Install Dependencies
+        run: go mod download
+
+      - name: Run Unit Tests
+        run: go test -v -race ./...
+
+      - name: Verify Docker Build
+        run: docker build -t mini-ad-server:test .
+
+  # ------------------------------------
+  # 2. CD Job: Auto Deploy to VPS
+  # ------------------------------------
+  deploy:
+    name: Deploy to VPS
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e
+            echo "🚀 Starting Deployment on VPS..."
+            cd /var/www/mini-ad-server
+
+            # Pull latest changes
+            echo "📥 Pulling latest code..."
+            git pull origin main
+
+            # Rebuild and restart only the app container
+            echo "🐳 Rebuilding and updating Docker containers..."
+            docker compose up --build -d app
+
+            # Wait a few seconds and verify health
+            sleep 4
+            echo "🩺 Running Health Check..."
+            curl -f http://localhost:8008/health || (echo "Health check failed!" && exit 1)
+
+            echo "✅ Deployment Successful to https://ad.piggysmart.cloud!"
+
