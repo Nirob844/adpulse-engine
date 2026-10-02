@@ -14,7 +14,7 @@ up-deps: ## Start PostgreSQL and Redis containers in background
 	docker compose up -d postgres redis
 
 up: ## Start all containers (Postgres, Redis, and Go App) in background
-	docker compose up -d
+	docker compose up --build -d
 
 down: ## Stop all Docker containers
 	docker compose down

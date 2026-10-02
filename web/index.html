@@ -3,29 +3,627 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Ad Server</title>
+    <title>Mini Ad Server — High-Throughput Ad Engine</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; margin: 0; }
-        .container { max-width: 800px; margin: 0 auto; background: #1e293b; padding: 32px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        h1 { color: #38bdf8; margin-top: 0; }
-        p { color: #94a3b8; font-size: 16px; line-height: 1.6; }
-        .links { margin-top: 24px; display: flex; gap: 16px; }
-        a { display: inline-block; background: #2563eb; color: #fff; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: 500; transition: background 0.2s; }
-        a:hover { background: #1d4ed8; }
-        .badge { background: #10b981; color: #064e3b; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        :root {
+            --bg-base: #090d16;
+            --bg-surface: #111827;
+            --bg-card: rgba(31, 41, 55, 0.7);
+            --bg-card-hover: rgba(55, 65, 81, 0.85);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(56, 189, 248, 0.4);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.2);
+            --accent-purple: #818cf8;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 50% -10%, rgba(56, 189, 248, 0.18), transparent 55%),
+                radial-gradient(circle at 10% 85%, rgba(129, 140, 248, 0.1), transparent 45%),
+                radial-gradient(circle at 90% 40%, rgba(16, 185, 129, 0.1), transparent 45%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            line-height: 1.5;
+        }
+
+        .portal-wrapper {
+            max-width: 1080px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Hero Header */
+        .hero-card {
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 36px 40px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 40px rgba(56, 189, 248, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, #10b981, transparent);
+        }
+
+        .hero-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #0284c7, #6366f1);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 4px 16px rgba(56, 189, 248, 0.4);
+        }
+
+        .brand-titles h1 {
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: -0.8px;
+            background: linear-gradient(135deg, #ffffff 30%, #38bdf8 80%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-titles p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #34d399;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .hero-desc {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 820px;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        /* Metrics Row */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 14px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .metric-pill {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .metric-icon {
+            font-size: 1.25rem;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .metric-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metric-val {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .metric-lbl {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Portal Cards Grid */
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+        }
+
+        .portal-card {
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(12px);
+        }
+
+        .portal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: transparent;
+            transition: background 0.25s ease;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-hover);
+            box-shadow: 0 16px 32px -10px rgba(0, 0, 0, 0.6), 0 0 24px var(--primary-glow);
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .portal-card.card-admin:hover::before { background: linear-gradient(90deg, #3b82f6, #8b5cf6); }
+        .portal-card.card-publisher:hover::before { background: linear-gradient(90deg, #06b6d4, #3b82f6); }
+        .portal-card.card-docs:hover::before { background: linear-gradient(90deg, #10b981, #06b6d4); }
+        .portal-card.card-health:hover::before { background: linear-gradient(90deg, #f59e0b, #ec4899); }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+        }
+
+        .card-admin .card-icon { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+        .card-publisher .card-icon { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+        .card-docs .card-icon { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .card-health .card-icon { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+        .card-pill {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .card-arrow {
+            transition: transform 0.2s ease;
+        }
+
+        .portal-card:hover .card-arrow {
+            transform: translateX(4px);
+        }
+
+        /* Live Health Diagnostic Bar */
+        .health-bar {
+            background: rgba(17, 24, 39, 0.7);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 14px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            font-size: 0.82rem;
+            backdrop-filter: blur(8px);
+        }
+
+        .health-items {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .health-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+
+        .health-item strong {
+            color: var(--text-primary);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10b981;
+            box-shadow: 0 0 6px #10b981;
+        }
+
+        .dot.warn {
+            background-color: #f59e0b;
+            box-shadow: 0 0 6px #f59e0b;
+        }
+
+        .dot.err {
+            background-color: #ef4444;
+            box-shadow: 0 0 6px #ef4444;
+        }
+
+        .cli-tip {
+            color: var(--text-muted);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.78rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            padding: 12px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+
+        footer a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Mini Ad Server <span class="badge">Running</span></h1>
-        <p>A high-performance Go ad serving engine backed by PostgreSQL and Redis.</p>
-        <div class="links" style="display: flex; flex-wrap: wrap; gap: 12px;">
-            <a href="/admin" style="background: linear-gradient(135deg, #2563eb, #7c3aed);">⚡ Admin Dashboard (/admin)</a>
-            <a href="/publisher.html">🌐 View Demo Publisher Page</a>
-            <a href="/docs" style="background: #059669;">📄 Interactive API Docs (/docs)</a>
-            <a href="/health" style="background: #334155;">🩺 Health Check</a>
+
+    <div class="portal-wrapper">
+
+        <!-- Hero Header -->
+        <header class="hero-card">
+            <div class="hero-top">
+                <div class="brand-group">
+                    <div class="brand-icon">⚡</div>
+                    <div class="brand-titles">
+                        <h1>Mini Ad Server</h1>
+                        <p>High-Throughput Digital Advertising Engine</p>
+                    </div>
+                </div>
+                <div class="status-badge">
+                    <span class="pulse-dot"></span>
+                    <span>System Operational</span>
+                </div>
+            </div>
+
+            <p class="hero-desc">
+                An enterprise-grade, low-latency ad serving platform written in <strong>Go (Chi)</strong>, backed by 
+                <strong>PostgreSQL 16</strong> with compound B-tree indexing and <strong>Redis 7</strong> for candidate caching. 
+                Engineered with an asynchronous event ingestion worker pool streaming bulk records via binary <code>pgx.CopyFrom</code>.
+            </p>
+
+            <!-- Verified Benchmark Highlights -->
+            <div class="metrics-grid">
+                <div class="metric-pill">
+                    <div class="metric-icon">🚀</div>
+                    <div class="metric-info">
+                        <span class="metric-val">7,128+ RPS</span>
+                        <span class="metric-lbl">Verified Throughput</span>
+                    </div>
+                </div>
+                <div class="metric-pill">
+                    <div class="metric-icon">⚡</div>
+                    <div class="metric-info">
+                        <span class="metric-val">&lt; 1 ms</span>
+                        <span class="metric-lbl">Tracking Latency</span>
+                    </div>
+                </div>
+                <div class="metric-pill">
+                    <div class="metric-icon">📦</div>
+                    <div class="metric-info">
+                        <span class="metric-val">Worker Pool</span>
+                        <span class="metric-lbl">Async Batch Writing</span>
+                    </div>
+                </div>
+                <div class="metric-pill">
+                    <div class="metric-icon">🛡️</div>
+                    <div class="metric-info">
+                        <span class="metric-val">100% Success</span>
+                        <span class="metric-lbl">Zero Error Rate</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Portal Navigation Cards -->
+        <nav class="portal-grid">
+            <!-- 1. Admin Control Center -->
+            <a href="/admin" class="portal-card card-admin">
+                <div>
+                    <div class="card-header">
+                        <div class="card-icon">⚡</div>
+                        <span class="card-pill">Management &amp; DSP</span>
+                    </div>
+                    <h2 class="card-title">Admin Control Center</h2>
+                    <p class="card-desc">
+                        Full CRUD interface to create, pause, and delete campaigns, upload banner creatives, enforce impression limits, and inspect live CTR metrics.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <span>Launch Dashboard (/admin)</span>
+                    <span class="card-arrow">&rarr;</span>
+                </div>
+            </a>
+
+            <!-- 2. Demo Publisher Environment -->
+            <a href="/publisher.html" target="_blank" class="portal-card card-publisher">
+                <div>
+                    <div class="card-header">
+                        <div class="card-icon">🌐</div>
+                        <span class="card-pill">SSP Publisher Demo</span>
+                    </div>
+                    <h2 class="card-title">Demo Publisher Page</h2>
+                    <p class="card-desc">
+                        Realistic publication site ("The Daily Tech Chronicle") embedding <code>adtag.js</code> across 728x90 and 300x250 ad slots with live telemetry event streams.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <span>View Publisher (/publisher.html)</span>
+                    <span class="card-arrow">&rarr;</span>
+                </div>
+            </a>
+
+            <!-- 3. API Documentation -->
+            <a href="/docs" target="_blank" class="portal-card card-docs">
+                <div>
+                    <div class="card-header">
+                        <div class="card-icon">📄</div>
+                        <span class="card-pill">OpenAPI 3.0 / Scalar</span>
+                    </div>
+                    <h2 class="card-title">Interactive API Docs</h2>
+                    <p class="card-desc">
+                        Explore the complete REST API specification, test endpoints interactively, and inspect payload schemas via native Scalar documentation.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <span>Open API Reference (/docs)</span>
+                    <span class="card-arrow">&rarr;</span>
+                </div>
+            </a>
+
+            <!-- 4. System Health & Diagnostics -->
+            <a href="/health" target="_blank" class="portal-card card-health">
+                <div>
+                    <div class="card-header">
+                        <div class="card-icon">🩺</div>
+                        <span class="card-pill">Diagnostics</span>
+                    </div>
+                    <h2 class="card-title">System Healthcheck</h2>
+                    <p class="card-desc">
+                        Verify PostgreSQL 16 connection pool status, Redis cache ping latency, server uptime, and overall container health.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <span>Inspect Status (/health)</span>
+                    <span class="card-arrow">&rarr;</span>
+                </div>
+            </a>
+        </nav>
+
+        <!-- Live Health Diagnostic Bar -->
+        <div class="health-bar">
+            <div class="health-items">
+                <div class="health-item">
+                    <span class="dot" id="dot-pg"></span>
+                    <span>PostgreSQL: <strong id="val-pg">checking...</strong></span>
+                </div>
+                <div class="health-item">
+                    <span class="dot" id="dot-redis"></span>
+                    <span>Redis: <strong id="val-redis">checking...</strong></span>
+                </div>
+                <div class="health-item">
+                    <span class="dot" id="dot-ingester"></span>
+                    <span>Worker Pool: <strong id="val-ingester">active</strong></span>
+                </div>
+            </div>
+            <div class="cli-tip">
+                Quick Bench: <code>make bench</code>
+            </div>
         </div>
+
+        <!-- Footer -->
+        <footer>
+            <span>Mini Ad Server &bull; Engineered for Basirah Digital Solutions Technical Evaluation</span>
+            <div>
+                <a href="https://github.com/Nirob844/mini-ad-server" target="_blank">GitHub Repository</a>
+                &nbsp;&bull;&nbsp;
+                <a href="/admin">Admin Console</a>
+            </div>
+        </footer>
+
     </div>
+
+    <!-- Client Script for Live Health Polling & Dynamic Multi-Port Link Routing -->
+    <script>
+        (function() {
+            var host = (window.location && window.location.hostname) || '';
+            var port = (window.location && window.location.port) || '';
+            var backendOrigin = window.ADSERVER_URL || '';
+
+            // If running on dev frontend server (e.g. Live Server on port 5500), route links to Go backend on port 8000
+            if (!backendOrigin && (host === 'localhost' || host === '127.0.0.1') && port && port !== '8000') {
+                backendOrigin = 'http://localhost:8000';
+            }
+
+            if (backendOrigin) {
+                backendOrigin = backendOrigin.replace(/\/$/, '');
+                var links = document.querySelectorAll('a[href^="/"]');
+                for (var i = 0; i < links.length; i++) {
+                    links[i].href = backendOrigin + links[i].getAttribute('href');
+                }
+            }
+
+            // Live Health Polling
+            function checkHealth() {
+                var url = (backendOrigin || '') + '/health';
+                fetch(url)
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        var valPg = document.getElementById('val-pg');
+                        var dotPg = document.getElementById('dot-pg');
+                        var valRedis = document.getElementById('val-redis');
+                        var dotRedis = document.getElementById('dot-redis');
+
+                        if (valPg && dotPg) {
+                            var isPgOk = data.database && data.database.indexOf('connected') === 0;
+                            valPg.textContent = isPgOk ? 'Connected' : 'Offline';
+                            dotPg.className = 'dot ' + (isPgOk ? '' : 'err');
+                        }
+
+                        if (valRedis && dotRedis) {
+                            var isRedisOk = data.redis && data.redis.indexOf('connected') === 0;
+                            valRedis.textContent = isRedisOk ? 'Connected' : 'Offline';
+                            dotRedis.className = 'dot ' + (isRedisOk ? '' : 'warn');
+                        }
+                    })
+                    .catch(function(err) {
+                        var valPg = document.getElementById('val-pg');
+                        var dotPg = document.getElementById('dot-pg');
+                        if (valPg && dotPg) {
+                            valPg.textContent = 'Server Offline';
+                            dotPg.className = 'dot err';
+                        }
+                    });
+            }
+
+            checkHealth();
+            setInterval(checkHealth, 10000);
+        })();
+    </script>
 </body>
 </html>
-

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -79,19 +80,21 @@ func getClientIP(r *http.Request) string {
 	if simIP := strings.TrimSpace(r.URL.Query().Get("ip")); simIP != "" {
 		return simIP
 	}
-	if xRealIP := r.Header.Get("X-Real-IP"); xRealIP != "" {
-		return strings.TrimSpace(xRealIP)
+	if xRealIP := strings.TrimSpace(r.Header.Get("X-Real-IP")); xRealIP != "" {
+		return xRealIP
 	}
 	if xForwardedFor := r.Header.Get("X-Forwarded-For"); xForwardedFor != "" {
 		parts := strings.Split(xForwardedFor, ",")
 		if len(parts) > 0 {
-			return strings.TrimSpace(parts[0])
+			ip := strings.TrimSpace(parts[0])
+			if ip != "" {
+				return ip
+			}
 		}
 	}
-	// Fall back to RemoteAddr (strip port if present)
-	addr := r.RemoteAddr
-	if idx := strings.LastIndex(addr, ":"); idx != -1 {
-		return addr[:idx]
+	// Fall back to RemoteAddr (reliably strip port using net.SplitHostPort for both IPv4 and IPv6)
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		return host
 	}
-	return addr
+	return r.RemoteAddr
 }

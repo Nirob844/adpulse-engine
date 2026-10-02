@@ -172,3 +172,74 @@ func TestServeAdSuccessAndNoContent(t *testing.T) {
 		t.Errorf("expected 204 No Content for size 999x888, got %d: %s", wNoMatch.Code, wNoMatch.Body.String())
 	}
 }
+
+func TestGetClientIP(t *testing.T) {
+	tests := []struct {
+		name       string
+		url        string
+		headers    map[string]string
+		remoteAddr string
+		expectedIP string
+	}{
+		{
+			name:       "Simulated IP query parameter takes top priority",
+			url:        "/ad?size=300x250&ip=192.168.1.99",
+			headers:    map[string]string{"X-Real-IP": "10.0.0.1", "X-Forwarded-For": "172.16.0.1"},
+			remoteAddr: "127.0.0.1:8000",
+			expectedIP: "192.168.1.99",
+		},
+		{
+			name:       "X-Real-IP header priority over RemoteAddr",
+			url:        "/ad?size=300x250",
+			headers:    map[string]string{"X-Real-IP": "203.0.113.195"},
+			remoteAddr: "127.0.0.1:8000",
+			expectedIP: "203.0.113.195",
+		},
+		{
+			name:       "X-Forwarded-For first IP in list",
+			url:        "/ad?size=300x250",
+			headers:    map[string]string{"X-Forwarded-For": "198.51.100.42, 10.0.0.1, 127.0.0.1"},
+			remoteAddr: "127.0.0.1:8000",
+			expectedIP: "198.51.100.42",
+		},
+		{
+			name:       "IPv4 RemoteAddr with port",
+			url:        "/ad?size=300x250",
+			remoteAddr: "192.168.1.50:49281",
+			expectedIP: "192.168.1.50",
+		},
+		{
+			name:       "IPv6 RemoteAddr with port",
+			url:        "/ad?size=300x250",
+			remoteAddr: "[2001:db8::1]:54321",
+			expectedIP: "2001:db8::1",
+		},
+		{
+			name:       "IPv6 localhost with port",
+			url:        "/ad?size=300x250",
+			remoteAddr: "[::1]:50000",
+			expectedIP: "::1",
+		},
+		{
+			name:       "Plain IP without port fallback",
+			url:        "/ad?size=300x250",
+			remoteAddr: "10.10.10.10",
+			expectedIP: "10.10.10.10",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tc.url, nil)
+			for k, v := range tc.headers {
+				req.Header.Set(k, v)
+			}
+			req.RemoteAddr = tc.remoteAddr
+
+			got := getClientIP(req)
+			if got != tc.expectedIP {
+				t.Errorf("expected IP %q, got %q", tc.expectedIP, got)
+			}
+		})
+	}
+}
