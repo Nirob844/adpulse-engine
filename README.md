@@ -1,11 +1,24 @@
 # Mini Ad Server
 
+[![CI/CD Pipeline](https://github.com/Nirob844/mini-ad-server/actions/workflows/deploy.yml/badge.svg)](https://github.com/Nirob844/mini-ad-server/actions)
+[![Live Production](https://img.shields.io/badge/Live%20Demo-ad.piggysmart.cloud-brightgreen?style=flat&logo=nginx)](https://ad.piggysmart.cloud)
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat&logo=go)](https://golang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql)](https://www.postgresql.org)
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat&logo=redis)](https://redis.io)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A high-throughput, low-latency digital advertising engine written in **Go (Chi)**, backed by **PostgreSQL 16** with compound B-tree indexing and **Redis 7** for candidate caching and real-time frequency capping.
+
+> 🚀 **Live Production Deployment**: Fully deployed with SSL and automated CI/CD pipeline on Linux VPS at **[https://ad.piggysmart.cloud](https://ad.piggysmart.cloud)**
+
+---
+
+### 🌐 Quick Live Links
+- **Interactive Landing & Showcase**: [https://ad.piggysmart.cloud/](https://ad.piggysmart.cloud/)
+- **Operations & Admin Dashboard**: [https://ad.piggysmart.cloud/admin](https://ad.piggysmart.cloud/admin)
+- **Publisher Integration Demo**: [https://ad.piggysmart.cloud/publisher.html](https://ad.piggysmart.cloud/publisher.html)
+- **Interactive OpenAPI / Scalar Docs**: [https://ad.piggysmart.cloud/docs](https://ad.piggysmart.cloud/docs)
+- **Live System Healthcheck**: [https://ad.piggysmart.cloud/health](https://ad.piggysmart.cloud/health)
 
 ---
 
@@ -118,6 +131,7 @@ All standard requirements and **100% of optional bonus features** are fully impl
 - [x] **Advanced Upgrade 1 — Asynchronous Event Ingestion & Batch Writing (Worker Pool)**: Non-blocking in-memory Go channel (10,000 capacity) coupled with a background worker flushing events in bulk via PostgreSQL's streaming binary `pgx.CopyFrom` protocol. Guarantees zero data loss on graceful shutdown (`SIGTERM`/`SIGINT`).
 - [x] **Advanced Upgrade 2 — High-Concurrency CLI Benchmark Engine (`cmd/bench`)**: Standalone Go load testing tool with connection pooling, percentile latency distributions (Min, Mean, P50, P90, P95, P99), and ASCII progress bars.
 - [x] **Advanced Upgrade 3 — Full Admin Control Center (`/admin`)**: Interactive web dashboard for managing campaigns, creatives, real-time analytics chart, and live health monitoring.
+- [x] **DevOps & Production Deployment**: Live Linux VPS deployment with Nginx reverse proxy, automated Let's Encrypt TLS/SSL, and GitHub Actions CI/CD pipeline (continuous unit testing, race detection, Docker build verification, and zero-downtime SSH automated deployment).
 
 ---
 
@@ -287,6 +301,7 @@ Navigate to `http://localhost:8000/publisher.html` in your browser.
 | Variable | Default | Description |
 | :--- | :--- | :--- |
 | `SERVER_PORT` / `PORT` | `8000` | Port for the HTTP server to listen on |
+| `APP_URL` | `http://localhost:8000` | Public base URL used for generating tracking URLs, ad tags, and OpenAPI specifications (e.g. `https://ad.piggysmart.cloud`) |
 | `DATABASE_URL` | `postgres://adserver:...` | PostgreSQL connection string |
 | `REDIS_URL` | `redis://localhost:6381/0` | Redis connection URL |
 | `AD_FREQ_CAP_MAX` | `100` | Max impressions allowed per creative per client IP per day (`0` disables capping) |
