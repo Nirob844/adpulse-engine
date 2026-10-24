@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/nirob844/mini-ad-server/internal/cache"
-	"github.com/nirob844/mini-ad-server/internal/config"
-	"github.com/nirob844/mini-ad-server/internal/db"
-	"github.com/nirob844/mini-ad-server/internal/repo"
-	"github.com/nirob844/mini-ad-server/internal/server"
-	"github.com/nirob844/mini-ad-server/internal/service"
+	"github.com/nirob844/adpulse-engine/internal/cache"
+	"github.com/nirob844/adpulse-engine/internal/config"
+	"github.com/nirob844/adpulse-engine/internal/db"
+	"github.com/nirob844/adpulse-engine/internal/repo"
+	"github.com/nirob844/adpulse-engine/internal/server"
+	"github.com/nirob844/adpulse-engine/internal/service"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	slog.Info("Starting Mini Ad Server...")
+	slog.Info("Starting AdPulse Engine...")
 
 	// 2. Configuration
 	cfg, err := config.Load()

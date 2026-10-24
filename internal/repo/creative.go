@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nirob844/mini-ad-server/internal/model"
+	"github.com/nirob844/adpulse-engine/internal/model"
 )
 
 // ErrForeignKeyViolation is returned when a foreign key constraint is violated.

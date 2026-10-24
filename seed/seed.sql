@@ -1,4 +1,4 @@
--- Mini Ad Server Initial Seed Data
+-- AdPulse Engine Initial Seed Data
 -- 4 Campaigns (3 Active, 1 Paused)
 -- Each campaign has both 300x250 and 728x90 creatives with placehold.co images
 

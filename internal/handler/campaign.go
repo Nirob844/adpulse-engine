@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/nirob844/mini-ad-server/internal/model"
-	"github.com/nirob844/mini-ad-server/internal/service"
+	"github.com/nirob844/adpulse-engine/internal/model"
+	"github.com/nirob844/adpulse-engine/internal/service"
 )
 
 // CampaignHandler handles campaign management HTTP requests via CampaignService.

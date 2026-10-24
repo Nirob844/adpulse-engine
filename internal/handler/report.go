@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/nirob844/mini-ad-server/internal/service"
+	"github.com/nirob844/adpulse-engine/internal/service"
 )
 
 // ReportHandler handles reporting and analytics HTTP requests.

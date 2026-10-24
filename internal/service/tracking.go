@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nirob844/mini-ad-server/internal/model"
-	"github.com/nirob844/mini-ad-server/internal/repo"
+	"github.com/nirob844/adpulse-engine/internal/model"
+	"github.com/nirob844/adpulse-engine/internal/repo"
 )
 
 // TrackingCreativeRepo defines creative retrieval for tracking.

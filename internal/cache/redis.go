@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/nirob844/mini-ad-server/internal/model"
+	"github.com/nirob844/adpulse-engine/internal/model"
 )
 
 // Client wraps the redis.Client with domain-specific caching and counter operations.

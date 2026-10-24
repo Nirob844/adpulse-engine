@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: Mini Ad Server API
+  title: AdPulse Engine API
   description: |
-    A high-performance ad-serving engine built in Go with PostgreSQL and Redis.
+    A high-throughput, low-latency digital advertising engine built in Go with PostgreSQL and Redis.
     Provides campaign management, real-time ad selection, pixel tracking, and CTR reporting.
   version: 1.0.0
 servers:

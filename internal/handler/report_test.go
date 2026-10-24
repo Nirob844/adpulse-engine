@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/nirob844/mini-ad-server/internal/config"
-	"github.com/nirob844/mini-ad-server/internal/db"
-	"github.com/nirob844/mini-ad-server/internal/model"
-	"github.com/nirob844/mini-ad-server/internal/repo"
-	"github.com/nirob844/mini-ad-server/internal/service"
+	"github.com/nirob844/adpulse-engine/internal/config"
+	"github.com/nirob844/adpulse-engine/internal/db"
+	"github.com/nirob844/adpulse-engine/internal/model"
+	"github.com/nirob844/adpulse-engine/internal/repo"
+	"github.com/nirob844/adpulse-engine/internal/service"
 )
 
 func setupReportTestRouter(t *testing.T) (chi.Router, *repo.AdEventRepo, *repo.CreativeRepo, *repo.CampaignRepo) {

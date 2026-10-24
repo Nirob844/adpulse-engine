@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nirob844/mini-ad-server/internal/config"
+	"github.com/nirob844/adpulse-engine/internal/config"
 )
 
 func TestDBConnectAndMigrate(t *testing.T) {

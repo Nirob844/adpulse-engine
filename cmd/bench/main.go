@@ -256,7 +256,7 @@ func buildRequestURL(baseURL, scenario string, idx int, sizes []string, creative
 func printHeader(cfg Config) {
 	fmt.Println()
 	fmt.Printf("%s╔══════════════════════════════════════════════════════════════════════════╗%s\n", colorCyan, colorReset)
-	fmt.Printf("%s║           MINI AD SERVER - HIGH-CONCURRENCY BENCHMARK TOOL               ║%s\n", colorCyan, colorReset)
+	fmt.Printf("%s║          ADPULSE ENGINE - HIGH-CONCURRENCY BENCHMARK TOOL                ║%s\n", colorCyan, colorReset)
 	fmt.Printf("%s╚══════════════════════════════════════════════════════════════════════════╝%s\n", colorCyan, colorReset)
 	fmt.Printf(" Target URL     : %s%s%s\n", colorBold, cfg.BaseURL, colorReset)
 	fmt.Printf(" Workload Mode  : %s%s%s\n", colorYellow, strings.ToUpper(cfg.Scenario), colorReset)

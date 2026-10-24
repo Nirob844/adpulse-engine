@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nirob844/mini-ad-server/internal/service"
+	"github.com/nirob844/adpulse-engine/internal/service"
 )
 
 // Standard 43-byte 1x1 transparent GIF binary sequence

@@ -11,11 +11,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nirob844/mini-ad-server/internal/cache"
-	"github.com/nirob844/mini-ad-server/internal/config"
-	"github.com/nirob844/mini-ad-server/internal/handler"
-	"github.com/nirob844/mini-ad-server/internal/repo"
-	"github.com/nirob844/mini-ad-server/internal/service"
+	"github.com/nirob844/adpulse-engine/internal/cache"
+	"github.com/nirob844/adpulse-engine/internal/config"
+	"github.com/nirob844/adpulse-engine/internal/handler"
+	"github.com/nirob844/adpulse-engine/internal/repo"
+	"github.com/nirob844/adpulse-engine/internal/service"
 )
 
 // RouterConfig defines dependencies required to build the Chi router.

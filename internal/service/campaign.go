@@ -5,8 +5,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/nirob844/mini-ad-server/internal/model"
-	"github.com/nirob844/mini-ad-server/internal/repo"
+	"github.com/nirob844/adpulse-engine/internal/model"
+	"github.com/nirob844/adpulse-engine/internal/repo"
 )
 
 // Common business logic errors

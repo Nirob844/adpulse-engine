@@ -1,5 +1,5 @@
 /**
- * Mini Ad Server - Client-Side Ad Tag Library
+ * AdPulse Engine - Client-Side Ad Tag Library
  * 
  * Features:
  * - Scans DOM for ad slots: <div class="ad-slot" data-ad-size="300x250"></div>
@@ -14,7 +14,7 @@
 (function (window, document) {
     'use strict';
 
-    var MiniAdTag = {
+    var AdPulseTag = {
         version: '1.0.0',
         apiBase: (function () {
             if (typeof window !== 'undefined' && window.ADSERVER_URL) {
@@ -78,7 +78,7 @@
 
             var size = slot.getAttribute('data-ad-size');
             if (!size) {
-                console.warn('[MiniAdTag] Missing data-ad-size on slot:', slot);
+                console.warn('[AdPulseTag] Missing data-ad-size on slot:', slot);
                 return;
             }
 
@@ -121,7 +121,7 @@
                 self._renderAd(slot, size, adData);
             })
             .catch(function (error) {
-                console.error('[MiniAdTag] Error loading ad for slot ' + size + ':', error);
+                console.error('[AdPulseTag] Error loading ad for slot ' + size + ':', error);
                 self._handleError(slot, size, error);
             });
         },
@@ -228,10 +228,10 @@
                     timestamp: new Date().toISOString()
                 };
 
-                // Dispatch custom event for real-time diagnostics
-                var ev = new CustomEvent('miniad:impression', { detail: eventDetail });
-                window.dispatchEvent(ev);
-                console.log('[MiniAdTag] Impression tracked for creative #' + creativeId + ' on slot ' + size);
+                // Dispatch custom events for real-time diagnostics (AdPulse & legacy MiniAd)
+                window.dispatchEvent(new CustomEvent('adpulse:impression', { detail: eventDetail }));
+                window.dispatchEvent(new CustomEvent('miniad:impression', { detail: eventDetail }));
+                console.log('[AdPulseTag] Impression tracked for creative #' + creativeId + ' on slot ' + size);
             }
 
             if (imgElem) {
@@ -249,7 +249,7 @@
                 imgElem.addEventListener('error', function () {
                     var fallbackSvg = (self.apiBase || '') + '/assets/creative_' + size + '.svg';
                     if (imgElem.src !== fallbackSvg) {
-                        console.warn('[MiniAdTag] Creative image #' + creativeId + ' failed to load. Switching to local SVG:', fallbackSvg);
+                        console.warn('[AdPulseTag] Creative image #' + creativeId + ' failed to load. Switching to local SVG:', fallbackSvg);
                         imgElem.src = fallbackSvg;
                     }
                 }, { once: true });
@@ -267,32 +267,30 @@
 
             // Click listener for diagnostic event emission
             anchor.addEventListener('click', function () {
-                var ev = new CustomEvent('miniad:click', {
-                    detail: {
-                        slotId: slot.id || null,
-                        size: size,
-                        creativeId: creativeId,
-                        clickUrl: clickUrl,
-                        clientIP: self.simulatedIP || 'Auto (Real IP)',
-                        timestamp: new Date().toISOString()
-                    }
-                });
-                window.dispatchEvent(ev);
-            });
-
-            // Dispatch ad loaded event
-            var loadEvent = new CustomEvent('miniad:loaded', {
-                detail: {
+                var clickDetail = {
                     slotId: slot.id || null,
                     size: size,
                     creativeId: creativeId,
                     clickUrl: clickUrl,
-                    impressionUrl: impressionUrl,
                     clientIP: self.simulatedIP || 'Auto (Real IP)',
                     timestamp: new Date().toISOString()
-                }
+                };
+                window.dispatchEvent(new CustomEvent('adpulse:click', { detail: clickDetail }));
+                window.dispatchEvent(new CustomEvent('miniad:click', { detail: clickDetail }));
             });
-            window.dispatchEvent(loadEvent);
+
+            // Dispatch ad loaded event
+            var loadDetail = {
+                slotId: slot.id || null,
+                size: size,
+                creativeId: creativeId,
+                clickUrl: clickUrl,
+                impressionUrl: impressionUrl,
+                clientIP: self.simulatedIP || 'Auto (Real IP)',
+                timestamp: new Date().toISOString()
+            };
+            window.dispatchEvent(new CustomEvent('adpulse:loaded', { detail: loadDetail }));
+            window.dispatchEvent(new CustomEvent('miniad:loaded', { detail: loadDetail }));
         },
 
         /**
@@ -306,17 +304,16 @@
                 '<span class="ad-empty-text">No active ad available for ' + size + '</span>' +
                 '</div>';
 
-            var emptyEvent = new CustomEvent('miniad:empty', {
-                detail: {
-                    slotId: slot.id || null,
-                    size: size,
-                    status: 204,
-                    clientIP: this.simulatedIP || 'Auto (Real IP)',
-                    timestamp: new Date().toISOString()
-                }
-            });
-            window.dispatchEvent(emptyEvent);
-            console.log('[MiniAdTag] No ad content available for slot ' + size + ' (HTTP 204)');
+            var emptyDetail = {
+                slotId: slot.id || null,
+                size: size,
+                status: 204,
+                clientIP: this.simulatedIP || 'Auto (Real IP)',
+                timestamp: new Date().toISOString()
+            };
+            window.dispatchEvent(new CustomEvent('adpulse:empty', { detail: emptyDetail }));
+            window.dispatchEvent(new CustomEvent('miniad:empty', { detail: emptyDetail }));
+            console.log('[AdPulseTag] No ad content available for slot ' + size + ' (HTTP 204)');
         },
 
         /**
@@ -330,28 +327,28 @@
                 '<span class="ad-empty-text">Failed to load ' + size + '</span>' +
                 '</div>';
 
-            var errEvent = new CustomEvent('miniad:error', {
-                detail: {
-                    slotId: slot.id || null,
-                    size: size,
-                    error: error.message,
-                    timestamp: new Date().toISOString()
-                }
-            });
-            window.dispatchEvent(errEvent);
+            var errDetail = {
+                slotId: slot.id || null,
+                size: size,
+                error: error.message,
+                timestamp: new Date().toISOString()
+            };
+            window.dispatchEvent(new CustomEvent('adpulse:error', { detail: errDetail }));
+            window.dispatchEvent(new CustomEvent('miniad:error', { detail: errDetail }));
         }
     };
 
-    // Export globally
-    window.MiniAdTag = MiniAdTag;
+    // Export globally (primary AdPulseTag with MiniAdTag backward compatibility alias)
+    window.AdPulseTag = AdPulseTag;
+    window.MiniAdTag = AdPulseTag;
 
     // Auto-initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
-            MiniAdTag.init();
+            AdPulseTag.init();
         });
     } else {
-        MiniAdTag.init();
+        AdPulseTag.init();
     }
 
 })(window, document);

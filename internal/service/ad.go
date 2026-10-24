@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/nirob844/mini-ad-server/internal/model"
+	"github.com/nirob844/adpulse-engine/internal/model"
 )
 
 // Common ad serving errors

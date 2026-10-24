@@ -1,4 +1,4 @@
--- Mini Ad Server: Production Database Schema
+-- AdPulse Engine: Production Database Schema
 -- Compatible with PostgreSQL 14+
 
 -- 1. Campaigns Table

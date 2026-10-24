@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/nirob844/mini-ad-server/internal/model"
+	"github.com/nirob844/adpulse-engine/internal/model"
 )
 
 // BatchEventRepo defines the bulk insertion interface for ad events.

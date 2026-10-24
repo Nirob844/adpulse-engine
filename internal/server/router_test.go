@@ -59,8 +59,8 @@ func TestRouterHealthAndCORS(t *testing.T) {
 		t.Errorf("expected 200 OK for /adtag.js, got %d", wTag.Code)
 	}
 	bodyTag := wTag.Body.String()
-	if !strings.Contains(bodyTag, "MiniAdTag") {
-		t.Errorf("expected adtag.js to define MiniAdTag")
+	if !strings.Contains(bodyTag, "AdPulseTag") && !strings.Contains(bodyTag, "MiniAdTag") {
+		t.Errorf("expected adtag.js to define AdPulseTag")
 	}
 
 	// 6. Test /admin dashboard serving
@@ -72,7 +72,7 @@ func TestRouterHealthAndCORS(t *testing.T) {
 		t.Errorf("expected 200 OK for /admin, got %d", wAdmin.Code)
 	}
 	bodyAdmin := wAdmin.Body.String()
-	if !strings.Contains(bodyAdmin, "Operations & Admin Console") && !strings.Contains(bodyAdmin, "Mini Ad Server") {
+	if !strings.Contains(bodyAdmin, "Operations & Admin Console") && !strings.Contains(bodyAdmin, "AdPulse Engine") && !strings.Contains(bodyAdmin, "Mini Ad Server") {
 		t.Errorf("expected admin.html content in /admin response")
 	}
 

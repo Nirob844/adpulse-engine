@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nirob844/mini-ad-server/internal/model"
+	"github.com/nirob844/adpulse-engine/internal/model"
 )
 
 // AdEventRepo handles database operations for ad impressions and clicks.

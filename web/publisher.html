@@ -530,7 +530,7 @@
 
     <!-- Top Announcement Bar -->
     <div class="top-bar">
-        <span>Mini Ad Server Demo Publisher Environment</span>
+        <span>AdPulse Engine Demo Publisher Environment</span>
         <div>
             <a href="/" target="_blank">Server Dashboard</a>
             <a href="/docs" target="_blank">Interactive API Docs</a>
@@ -699,7 +699,7 @@
             <div class="event-log" id="event-log">
                 <div class="log-entry">
                     <span class="log-time">[System]</span>
-                    <span class="log-text">Publisher client initialized. Listening for MiniAdTag events...</span>
+                    <span class="log-text">Publisher client initialized. Listening for AdPulseTag events...</span>
                 </div>
             </div>
         </div>
@@ -709,12 +709,12 @@
     <!-- Footer -->
     <footer>
         <div class="container">
-            <p>&copy; 2026 Mini Ad Server Demo Publisher. All rights reserved.</p>
+            <p>&copy; 2026 AdPulse Engine Demo Publisher. All rights reserved.</p>
             <p style="margin-top: 6px; font-size: 0.75rem;">Engineered for high-throughput ad serving, real-time impression pixels, and click attribution.</p>
         </div>
     </footer>
 
-    <!-- Load Mini Ad Server Ad Tag Client -->
+    <!-- Load AdPulse Engine Ad Tag Client -->
     <script src="adtag.js"></script>
 
     <!-- Publisher Page Instrumentation Script -->
@@ -815,8 +815,9 @@
                 stats.requested += 2;
                 statReq.textContent = stats.requested;
                 addLog('load', 'IP SWITCH', 'Simulated Client IP switched to: ' + (ip || 'Auto (Real IP)'));
-                if (window.MiniAdTag) {
-                    window.MiniAdTag.setSimulatedIP(ip);
+                var tag = window.AdPulseTag || window.MiniAdTag;
+                if (tag) {
+                    tag.setSimulatedIP(ip);
                 }
             }
 
@@ -857,7 +858,8 @@
                 } catch (err) {}
                 statClk.textContent = stats.clicks;
 
-                var activeIP = (window.MiniAdTag && window.MiniAdTag.simulatedIP) ? window.MiniAdTag.simulatedIP : 'Auto (Real IP)';
+                var tag = window.AdPulseTag || window.MiniAdTag;
+                var activeIP = (tag && tag.simulatedIP) ? tag.simulatedIP : 'Auto (Real IP)';
                 addLog('click', 'CLICK', 'Simulated user click on creative #' + creativeId + ' [IP: ' + activeIP + '] &rarr; tracked via ' + href);
             };
 
@@ -866,8 +868,9 @@
                 stats.requested += 2;
                 statReq.textContent = stats.requested;
                 addLog('load', 'REFRESH', 'Requesting ads for 728x90 and 300x250 slots...');
-                if (window.MiniAdTag) {
-                    window.MiniAdTag.refreshAll();
+                var tag = window.AdPulseTag || window.MiniAdTag;
+                if (tag) {
+                    tag.refreshAll();
                 }
             };
 
@@ -904,7 +907,8 @@
             // Check if ad blocker extension is hiding slots or blocking requests
             setTimeout(function () {
                 var slot = document.getElementById('slot-leaderboard');
-                var isBlocked = !window.MiniAdTag || (slot && (slot.offsetHeight === 0 || window.getComputedStyle(slot).display === 'none'));
+                var tag = window.AdPulseTag || window.MiniAdTag;
+                var isBlocked = !tag || (slot && (slot.offsetHeight === 0 || window.getComputedStyle(slot).display === 'none'));
                 if (isBlocked) {
                     var notice = document.getElementById('adblock-notice');
                     if (notice) notice.style.display = 'block';

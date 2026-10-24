@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for Mini Ad Server
+# Multi-stage Dockerfile for AdPulse Engine
 # Build stage
 FROM golang:alpine AS builder
 

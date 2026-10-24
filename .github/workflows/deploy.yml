@@ -30,7 +30,7 @@ jobs:
         run: go test -v -race ./...
 
       - name: Verify Docker Build
-        run: docker build -t mini-ad-server:test .
+        run: docker build -t adpulse-engine:test .
 
   # ------------------------------------
   # 2. CD Job: Auto Deploy to VPS

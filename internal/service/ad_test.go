@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nirob844/mini-ad-server/internal/model"
+	"github.com/nirob844/adpulse-engine/internal/model"
 )
 
 type mockAdCache struct {

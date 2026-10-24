@@ -1,4 +1,4 @@
-module github.com/nirob844/mini-ad-server
+module github.com/nirob844/adpulse-engine
 
 go 1.25.0
 

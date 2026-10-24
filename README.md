@@ -1,6 +1,6 @@
-# Mini Ad Server
+# AdPulse Engine
 
-[![CI/CD Pipeline](https://github.com/Nirob844/mini-ad-server/actions/workflows/deploy.yml/badge.svg)](https://github.com/Nirob844/mini-ad-server/actions)
+[![CI/CD Pipeline](https://github.com/Nirob844/adpulse-engine/actions/workflows/deploy.yml/badge.svg)](https://github.com/Nirob844/adpulse-engine/actions)
 [![Live Production](https://img.shields.io/badge/Live%20Demo-ad.piggysmart.cloud-brightgreen?style=flat&logo=nginx)](https://ad.piggysmart.cloud)
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat&logo=go)](https://golang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql)](https://www.postgresql.org)
@@ -247,11 +247,11 @@ Navigate to `http://localhost:8000/publisher.html` in your browser.
 
 1. Clone the repository:
    ```bash
-   git clone git@github.com:Nirob844/mini-ad-server.git
-   cd mini-ad-server
+   git clone git@github.com:Nirob844/adpulse-engine.git
+   cd adpulse-engine
    ```
 
-2. Start all services (PostgreSQL, Redis, and Mini Ad Server):
+2. Start all services (PostgreSQL, Redis, and AdPulse Engine):
    ```bash
    docker compose up --build -d
    ```
@@ -287,7 +287,7 @@ Navigate to `http://localhost:8000/publisher.html` in your browser.
 
 4. The server will start on port `8000`:
    ```
-   2026/10/01 13:00:00 INFO Starting Mini Ad Server...
+   2026/10/01 13:00:00 INFO Starting AdPulse Engine...
    2026/10/01 13:00:00 INFO Connected to PostgreSQL successfully max_conns=25 min_conns=5
    2026/10/01 13:00:00 INFO Database migrations applied successfully
    2026/10/01 13:00:00 INFO Connected to Redis successfully
@@ -322,11 +322,11 @@ make test
 
 Expected output:
 ```
-ok   github.com/nirob844/mini-ad-server/internal/config     0.002s
-ok   github.com/nirob844/mini-ad-server/internal/db         0.015s
-ok   github.com/nirob844/mini-ad-server/internal/handler    0.163s
-ok   github.com/nirob844/mini-ad-server/internal/server     0.005s
-ok   github.com/nirob844/mini-ad-server/internal/service    0.003s
+ok   github.com/nirob844/adpulse-engine/internal/config     0.002s
+ok   github.com/nirob844/adpulse-engine/internal/db         0.015s
+ok   github.com/nirob844/adpulse-engine/internal/handler    0.163s
+ok   github.com/nirob844/adpulse-engine/internal/server     0.005s
+ok   github.com/nirob844/adpulse-engine/internal/service    0.003s
 ```
 
 ---
@@ -347,7 +347,7 @@ make bench
 
 ```text
 ╔══════════════════════════════════════════════════════════════════════════╗
-║           MINI AD SERVER - HIGH-CONCURRENCY BENCHMARK TOOL               ║
+║          ADPULSE ENGINE - HIGH-CONCURRENCY BENCHMARK TOOL                ║
 ╚══════════════════════════════════════════════════════════════════════════╝
  Target URL     : http://localhost:8000
  Workload Mode  : MIXED (70% Ads, 25% Impressions, 5% Clicks)
@@ -434,7 +434,6 @@ Given additional development time for an enterprise tier-1 ad tech platform, the
 
 ## Submission Details
 
-- **GitHub Repository**: [https://github.com/Nirob844/mini-ad-server](https://github.com/Nirob844/mini-ad-server)
-- **Shared Access**: Configured and shared with `riaadmorshed@gmail.com`.
+- **GitHub Repository**: [https://github.com/Nirob844/adpulse-engine](https://github.com/Nirob844/adpulse-engine)
 - **Author**: Md. Nirob Hasan ([@Nirob844](https://github.com/Nirob844))
 
